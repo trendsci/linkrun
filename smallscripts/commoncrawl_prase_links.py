@@ -26,15 +26,15 @@ def main():
     print("current uri    =",data_current_uri)
     print("current domain =",domex.extract(data_current_uri).domain)
     data_links = result["Envelope"]["Payload-Metadata"]["HTTP-Response-Metadata"]["HTML-Metadata"]["Links"]
-    #print(data_links)
+    print(data_links)
     df = pd.DataFrame(data_links)
-    print("A@/href")
+    #print("A@/href only =======")
     df_filtered = df[df['path']==r"A@/href"]
     df_filtered = df_filtered[
     df_filtered.apply(lambda x: domex.extract(x['url']).domain != "bbc" , axis=1)
     & df_filtered.apply(lambda x: domex.extract(x['url']).domain != "" , axis=1) ]
 
-    print(df_filtered.head(55))
+    print(df_filtered['url'].head(55).to_string(index=False))
     print(df_filtered.shape)
 
 if __name__ == "__main__":
