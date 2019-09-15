@@ -1,0 +1,6 @@
+#Directory structure
+
+Number corresponds to task in the pipeline:
+
+1<br>
+Transfer data from CommonCrawl S3 to my S3 bucket
