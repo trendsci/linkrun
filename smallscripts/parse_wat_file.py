@@ -86,7 +86,7 @@ with gzip.open(current_file, 'rb') as cc_wat:
                     & df_filtered.apply(lambda x: x[:10] != "javascript")#, axis = 1) #remove links to javascript functions
                     & df_filtered.apply(lambda x: domex.extract(x).suffix != "")].unique()#, axis=1)] #remove links to pages like "index.html" which are on same domain
 
-                    #
+                    # OLD, DataFrame based filtering
                     # df_filtered = df_filtered[
                     # df_filtered.apply(lambda x: domex.extract(x['url']).domain != current_domain)#, axis=1) #remove links that link-back to current domain
                     # & df_filtered.apply(lambda x: domex.extract(x['url']).domain != "")#, axis=1) #remove links with empty domain
