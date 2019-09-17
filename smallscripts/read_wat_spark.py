@@ -45,6 +45,8 @@ def filter_links(json_links, page_subdomain, page_domain, page_suffix):
     print("JSON LINKS",json_links)
     try:
         for link in json_links:
+
+            if link[['path']!=r"A@/href"]]: continue
             link_subdomain, link_domain, link_suffix = tldex.extract(link["url"])
 
             excluded_domains = [page_domain, "", "javascript"]
