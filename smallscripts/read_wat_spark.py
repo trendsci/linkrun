@@ -41,7 +41,7 @@ def get_json_links(json_line):
         pass
 
 def filter_links(json_links, page_subdomain, page_domain, page_suffix):
-    filtered_links = []
+    filtered_links = set()#[]
     excluded_domains = [page_domain, "", "javascript"]
     try:
         for link in json_links:
@@ -50,7 +50,7 @@ def filter_links(json_links, page_subdomain, page_domain, page_suffix):
                 if link['path'] == r"A@/href":
                     link_subdomain, link_domain, link_suffix = tldex.extract(link["url"])
                     if link_domain not in excluded_domains:
-                        filtered_links.append(link_domain)
+                        filtered_links.add(link_domain)
             except:
                 pass
         return filtered_links
@@ -62,6 +62,7 @@ def filter_links(json_links, page_subdomain, page_domain, page_suffix):
 def main(sc):
 #    s3file = "s3://commoncrawl/crawl-data/CC-MAIN-2019-30/segments/1563195523840.34/wat/CC-MAIN-20190715175205-20190715200159-00024.warc.wat.gz"
     file_location = "/home/sergey/projects/insight/mainproject/1/testwat/head.wat"
+    file_location = "/home/sergey/projects/insight/mainproject/1/testwat/testcase.wat"
     wat_lines = sc.textFile(file_location)
     #data = wat_lines.take(27)
     #print("27: ",data)
@@ -70,13 +71,16 @@ def main(sc):
     .map(lambda json_data: get_json_uri(json_data)).filter(lambda x: x != None)\
     .map(lambda x: ( *parse_domain(x[0]), x[0], x[1] )     )\
     .map(lambda x: ( *x[0:-1], get_json_links(x[-1]) )     )\
-    .map(lambda x: ( *x[0:-1], filter_links(x[-1],*x[:3]) )       )\
-    .filter(lambda x: ( x[-1] != None )    )
+    .map(lambda x: ( x[0:-1], filter_links(x[-1],*x[:3]) )       )\
+    .filter(lambda x: ( x[-1] != None )    )\
+    .flatMap(lambda x: [(z,x[0]) for z in x[1]])
     #.map(lambda x: print("x0!!:",x[0],"\nX1!!:",x[1]))#(parse_domain(x[0]),x[1]))
 
     #.map(lambda z: print(type(z)))
-    print(rdd.take(3))
-    print(rdd.describe()) ##here working.
+    view = rdd.take(10)
+    for line in view:
+        print(line)
+    #print(rdd.describe()) ##here working.
 
 
 if __name__ == "__main__":
