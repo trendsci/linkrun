@@ -42,13 +42,18 @@ def get_json_links(json_line):
 
 def filter_links(json_links, page_subdomain, page_domain, page_suffix):
     filtered_links = []
+    print("JSON LINKS",json_links)
     try:
         for link in json_links:
-            link_subdomain, link_domain, link_suffix = tldex.extract(link)
-            if link_domain != page_domain:
+            link_subdomain, link_domain, link_suffix = tldex.extract(link["url"])
+
+            excluded_domains = [page_domain, "", "javascript"]
+
+            if link_domain not in excluded_domains:
                 filtered_links.append(link_domain)
         return filtered_links
-    except:
+    except Exception as e:
+        print("error: ",e)
         pass
 
 
