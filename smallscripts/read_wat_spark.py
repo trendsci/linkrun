@@ -42,17 +42,17 @@ def get_json_links(json_line):
 
 def filter_links(json_links, page_subdomain, page_domain, page_suffix):
     filtered_links = []
-    print("JSON LINKS",json_links)
+    excluded_domains = [page_domain, "", "javascript"]
     try:
         for link in json_links:
-
-            if link[['path']!=r"A@/href"]]: continue
-            link_subdomain, link_domain, link_suffix = tldex.extract(link["url"])
-
-            excluded_domains = [page_domain, "", "javascript"]
-
-            if link_domain not in excluded_domains:
-                filtered_links.append(link_domain)
+            try:
+                #print("link path",link['path'])
+                if link['path'] == r"A@/href":
+                    link_subdomain, link_domain, link_suffix = tldex.extract(link["url"])
+                    if link_domain not in excluded_domains:
+                        filtered_links.append(link_domain)
+            except:
+                pass
         return filtered_links
     except Exception as e:
         print("error: ",e)
@@ -66,15 +66,17 @@ def main(sc):
     #data = wat_lines.take(27)
     #print("27: ",data)
     print("======== Parsing JSON ===="*2)
-    json_data = wat_lines.map(lambda x: get_json(x)).filter(lambda x: x != None)\
+    rdd = wat_lines.map(lambda x: get_json(x)).filter(lambda x: x != None)\
     .map(lambda json_data: get_json_uri(json_data)).filter(lambda x: x != None)\
     .map(lambda x: ( *parse_domain(x[0]), x[0], x[1] )     )\
     .map(lambda x: ( *x[0:-1], get_json_links(x[-1]) )     )\
-    .map(lambda x: ( *x[0:-1], filter_links(x[-1],*x[:3]) )       )
+    .map(lambda x: ( *x[0:-1], filter_links(x[-1],*x[:3]) )       )\
+    .filter(lambda x: ( x[-1] != None )    )
     #.map(lambda x: print("x0!!:",x[0],"\nX1!!:",x[1]))#(parse_domain(x[0]),x[1]))
 
     #.map(lambda z: print(type(z)))
-    print(json_data.take(3))
+    print(rdd.take(3))
+    print(rdd.describe()) ##here working.
 
 
 if __name__ == "__main__":
