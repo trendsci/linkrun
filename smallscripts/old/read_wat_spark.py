@@ -3,11 +3,6 @@
 ## MIGHT NEED TO RUN THIS USING:
 # spark-submit --packages org.apache.hadoop:hadoop-aws:2.7.0 ./path_to_this_python_code
 
-# might need to run in shell:
-# export PYSPARK_PYTHON=python3
-
-# submit jobs using:
-# $SPARK_HOME/bin/spark-submit --master spark://ip-10-0-0-11.us-west-2.compute.internal:7077  read_wat_spark.py
 
 from pyspark import SparkConf, SparkContext
 import ujson as json
