@@ -3,6 +3,8 @@
 from pyspark import SparkConf, SparkContext
 import ujson as json
 import tldextract as tldex
+import time
+
 
 def get_json(line):
     try:
@@ -24,13 +26,13 @@ def get_json_uri(json_line):
 
 def parse_domain(uri):
     try:
-        print("URI!! ",type(uri),"\n",uri)
+        ##print("URI!! ",type(uri),"\n",uri)
         subdomain, domain, suffix = tldex.extract(uri)
-        print("parsed!!: ",subdomain, domain, suffix)
+        ##print("parsed!!: ",subdomain, domain, suffix)
         #return subdomain + "." + domain + "." + suffix
         return subdomain, domain, suffix
     except Exception as e:
-        print("error:",e)
+        #print("error:",e)
         pass
 
 def get_json_links(json_line):
@@ -38,32 +40,44 @@ def get_json_links(json_line):
         links = json_line["Envelope"]["Payload-Metadata"]["HTTP-Response-Metadata"]["HTML-Metadata"]["Links"]
         return links
     except Exception as e:
-        print("error: ",e)
+        #print("error: ",e)
         pass
 
 def filter_links(json_links, page_subdomain, page_domain, page_suffix):
+    #print("filtering these links")
+    #print("json_links: ",json_links, "\npage_subdomain: ", page_subdomain,
+    #"\npage_domain: ", page_domain, "\npage_suffix: ", page_suffix)
     filtered_links = set()#[]
     excluded_domains = [page_domain, "", "javascript"]
+    excluded_suffixes = [""]
     try:
         for link in json_links:
             try:
                 #print("link path",link['path'])
                 if link['path'] == r"A@/href":
-                    link_subdomain, link_domain, link_suffix = tldex.extract(link['url'])
+                    #print("FOUND A@LINK!!!")
+                    link_url = link['url']
+                    #print("LINK URL",link_url)
+                    link_subdomain, link_domain, link_suffix = tldex.extract(link_url)
                     if link_domain not in excluded_domains:
-                        filtered_links.add(link_subdomain+"."+link_domain+"."+link_suffix)
-            except:
+                        if link_suffix not in excluded_suffixes:
+                            filtered_links.add( (link_subdomain+"."+link_domain+"."+link_suffix,link_url) )
+            except Exception as e:
+                #print("Error in filter_links: ", e)
                 pass
+        #print("DONE FIltering, results============:\n",filtered_links)
         return filtered_links
     except Exception as e:
-        print("error: ",e)
+        #print("error: ",e)
         pass
 
 
 def main(sc):
+    start_time = time.time()
 #    s3file = "s3://commoncrawl/crawl-data/CC-MAIN-2019-30/segments/1563195523840.34/wat/CC-MAIN-20190715175205-20190715200159-00024.warc.wat.gz"
     #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/head.wat"
-    file_location = "/home/sergey/projects/insight/mainproject/1/testwat/testwats/testcase2.wat"
+    #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/testwats/testcase2.wat"
+    file_location = "/home/sergey/projects/insight/mainproject/1/testwat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat"
     wat_lines = sc.textFile(file_location)
     #data = wat_lines.take(27)
     #print("27: ",data)
@@ -72,7 +86,7 @@ def main(sc):
     .map(lambda json_data: get_json_uri(json_data)).filter(lambda x: x != None)\
     .map(lambda x: ( parse_domain(x[0]),x[0], x[1] )     )\
     .map(lambda x: ( *x[0:-1], get_json_links(x[-1]) )     )\
-    .map(lambda x: ( *x[0:-1], filter_links(x[-1],*x[:3]) )       )\
+    .map(lambda x: ( *x[0:-1], filter_links(x[-1],*x[0]) )       )\
     .filter(lambda x: ( x[-1] != None )    )\
     .map(lambda x: (x[0],str(x[0][0]+"."+x[0][1]+"."+x[0][2]),*x[1:]))\
     .flatMap(lambda x: [(z,x[0],*x[1:-1]) for z in x[-1]])
@@ -81,11 +95,16 @@ def main(sc):
     #.map(lambda x: print("x0!!:",x[0],"\nX1!!:",x[1]))#(parse_domain(x[0]),x[1]))
 
     #.map(lambda z: print(type(z)))
-    view = rdd.take(100)
+    #print("COUNT = ",rdd.count())
+    view = rdd.take(1000000)
+    i = 0
     for line in view:
-        print(line)
-    #print(rdd.describe()) ##here working.
+        print(i, line)
+        i += 1
 
+    #print(rdd.describe()) ##here working.
+    run_time = time.time() - start_time
+    print("Total script run time: {}".format(run_time))
 
 if __name__ == "__main__":
     conf = SparkConf()
