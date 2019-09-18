@@ -76,8 +76,8 @@ def main(sc):
     start_time = time.time()
 #    s3file = "s3://commoncrawl/crawl-data/CC-MAIN-2019-30/segments/1563195523840.34/wat/CC-MAIN-20190715175205-20190715200159-00024.warc.wat.gz"
     #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/head.wat"
-    #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/testwats/testcase2.wat"
-    file_location = "/home/sergey/projects/insight/mainproject/1/testwat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat"
+    file_location = "/home/sergey/projects/insight/mainproject/1/testwat/testwats/testcase2.wat"
+    #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat"
     wat_lines = sc.textFile(file_location)
     #data = wat_lines.take(27)
     #print("27: ",data)
@@ -89,14 +89,14 @@ def main(sc):
     .map(lambda x: ( *x[0:-1], filter_links(x[-1],*x[0]) )       )\
     .filter(lambda x: ( x[-1] != None )    )\
     .map(lambda x: (x[0],str(x[0][0]+"."+x[0][1]+"."+x[0][2]),*x[1:]))\
-    .flatMap(lambda x: [(z,x[0],*x[1:-1]) for z in x[-1]])
+    .flatMap(lambda x: [(z[0],z[1],x[0],*x[1:-1]) for z in x[-1]])
 
     ##.map(lambda x: ( *parse_domain(x[0]), x[0], x[1] )     )\ #parse uri domain, uri, json
     #.map(lambda x: print("x0!!:",x[0],"\nX1!!:",x[1]))#(parse_domain(x[0]),x[1]))
 
     #.map(lambda z: print(type(z)))
     #print("COUNT = ",rdd.count())
-    view = rdd.take(1000000)
+    view = rdd.take(100)
     i = 0
     for line in view:
         print(i, line)
