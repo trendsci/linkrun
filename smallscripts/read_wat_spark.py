@@ -86,9 +86,9 @@ def main(sc):
     start_time = time.time()
 #    s3file = "s3://commoncrawl/crawl-data/CC-MAIN-2019-30/segments/1563195523840.34/wat/CC-MAIN-20190715175205-20190715200159-00024.warc.wat.gz"
     #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/head.wat"
-    #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/testwats/testcase2.wat"
+    file_location = "/home/sergey/projects/insight/mainproject/1/testwat/testwats/testcase2.wat"
     #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat.gz"
-    file_location = "s3a://commoncrawl/crawl-data/CC-MAIN-2019-30/segments/1563195523840.34/wat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat.gz"
+    #file_location = "s3a://commoncrawl/crawl-data/CC-MAIN-2019-30/segments/1563195523840.34/wat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat.gz"
     wat_lines = sc.textFile(file_location)
     #data = wat_lines.take(27)
     #print("27: ",data)
@@ -110,7 +110,7 @@ def main(sc):
 
     #.map(lambda z: print(type(z)))
     #print("COUNT = ",rdd.count())
-    view = rdd.take(100)
+    view = rdd.collect  ()
     i = 0
     for line in view:
         print(i, line)

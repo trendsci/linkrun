@@ -1,0 +1,10 @@
+purchase_type: on_demand
+subnet_id: subnet-0e74e22b60d927217
+num_instances: 1
+key_name: sergey-IAM-keypair
+security_group_ids: sg-02482db2da1ddbd52
+instance_type: m4.large
+tag_name: postgres
+vol_size: 100
+role: master
+use_eips: true
