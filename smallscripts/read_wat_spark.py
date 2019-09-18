@@ -9,7 +9,16 @@
 # submit jobs using:
 # $SPARK_HOME/bin/spark-submit --master spark://ip-10-0-0-11.us-west-2.compute.internal:7077  read_wat_spark.py
 
+# PORT forward to connect to db:
+# ssh -o ServerAliveInterval=10 -i sergey-IAM-keypair.pem -N -L 10000:localhost:5432 ubuntu@54.70.95.199
+
+## if missing packages, can run:
+# $SPARK_HOME/bin/spark-submit --packages  org.postgresql:postgresql:9.4.1207.jre7,org.apache.hadoop:hadoop-aws:2.7.0 ./read_wat_spark.py
+
+
 from pyspark import SparkConf, SparkContext
+from pyspark.sql import SparkSession
+
 import ujson as json
 import tldextract as tldex
 import time
@@ -86,9 +95,9 @@ def main(sc):
     start_time = time.time()
 #    s3file = "s3://commoncrawl/crawl-data/CC-MAIN-2019-30/segments/1563195523840.34/wat/CC-MAIN-20190715175205-20190715200159-00024.warc.wat.gz"
     #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/head.wat"
-    file_location = "/home/sergey/projects/insight/mainproject/1/testwat/testwats/testcase2.wat"
+    #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/testwats/testcase2.wat"
     #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat.gz"
-    #file_location = "s3a://commoncrawl/crawl-data/CC-MAIN-2019-30/segments/1563195523840.34/wat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat.gz"
+    file_location = "s3a://commoncrawl/crawl-data/CC-MAIN-2019-30/segments/1563195523840.34/wat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat.gz"
     wat_lines = sc.textFile(file_location)
     #data = wat_lines.take(27)
     #print("27: ",data)
@@ -104,13 +113,36 @@ def main(sc):
     .map(lambda x: (x[0],1))\
     .reduceByKey(lambda x,y: x+y)\
     .map(lambda x: (x[1],x[0]))\
-    .sortByKey(0)
+    .sortByKey(0).map(lambda x: (x[1],x[0]))
     ##.map(lambda x: ( *parse_domain(x[0]), x[0], x[1] )     )\ #parse uri domain, uri, json
     #.map(lambda x: print("x0!!:",x[0],"\nX1!!:",x[1]))#(parse_domain(x[0]),x[1]))
 
     #.map(lambda z: print(type(z)))
     #print("COUNT = ",rdd.count())
-    view = rdd.collect  ()
+
+    from pyspark.sql.context import SQLContext
+    from pyspark.sql.types import StructType
+    from pyspark.sql.types import StructField
+    from pyspark.sql.types import StringType
+    from pyspark.sql.types import DecimalType
+
+    #schema = StructType(StringType(),DecimalType())
+    #df = SQLContext.createDataFrame(rdd, schema)
+    spark = SparkSession(sc)
+    rdd_df = rdd.toDF()
+
+
+
+    mode = "overwrite"
+    url = "jdbc:postgresql://localhost:10000/linkrundb"
+    properties = {"user": "postgres","password": "turtles21","driver": "org.postgresql.Driver"}
+    rdd_df.write.jdbc(url=url, table="linkrun.mainstats", mode=mode, properties=properties)
+
+    #print("DataFrame====="*20)
+    #print(rdd_df.show())
+    #rdd_df.write.jdbc(url=url, table="linkrun.mainstats", mode=mode, properties=properties)
+
+    view = rdd.collect()
     i = 0
     for line in view:
         print(i, line)
@@ -119,6 +151,8 @@ def main(sc):
     #print(rdd.describe()) ##here working.
     run_time = time.time() - start_time
     print("Total script run time: {}".format(run_time))
+
+
 
 if __name__ == "__main__":
     conf = SparkConf()
