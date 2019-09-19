@@ -120,23 +120,27 @@ def main(sc):
     #.map(lambda z: print(type(z)))
     #print("COUNT = ",rdd.count())
 
-    from pyspark.sql.context import SQLContext
-    from pyspark.sql.types import StructType
-    from pyspark.sql.types import StructField
-    from pyspark.sql.types import StringType
-    from pyspark.sql.types import DecimalType
+    try:
 
-    #schema = StructType(StringType(),DecimalType())
-    #df = SQLContext.createDataFrame(rdd, schema)
-    spark = SparkSession(sc)
-    rdd_df = rdd.toDF()
+        from pyspark.sql.context import SQLContext
+        from pyspark.sql.types import StructType
+        from pyspark.sql.types import StructField
+        from pyspark.sql.types import StringType
+        from pyspark.sql.types import DecimalType
+
+        #schema = StructType(StringType(),DecimalType())
+        #df = SQLContext.createDataFrame(rdd, schema)
+        spark = SparkSession(sc)
+        rdd_df = rdd.toDF()
 
 
 
-    mode = "overwrite"
-    url = "jdbc:postgresql://localhost:10000/linkrundb"
-    properties = {"user": "postgres","password": "turtles21","driver": "org.postgresql.Driver"}
-    rdd_df.write.jdbc(url=url, table="linkrun.mainstats", mode=mode, properties=properties)
+        mode = "overwrite"
+        url = "jdbc:postgresql://localhost:10000/linkrundb"
+        properties = {"user": "postgres","password": "turtles21","driver": "org.postgresql.Driver"}
+        rdd_df.write.jdbc(url=url, table="linkrun.mainstats", mode=mode, properties=properties)
+    except:
+        pass
 
     #print("DataFrame====="*20)
     #print(rdd_df.show())

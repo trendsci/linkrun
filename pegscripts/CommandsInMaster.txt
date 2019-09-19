@@ -1,0 +1,5 @@
+Commands in master:
+
+sudo apt install -y python3-pip
+pip3 install ujson
+export PYSPARK_PYTHON=python3
