@@ -4,7 +4,7 @@ num_instances: 1
 key_name: sergey-IAM-keypair
 security_group_ids: sg-0458956f051ac53b2
 instance_type: m4.large
-tag_name: spark-cluster
+tag_name: spark-cluster2
 vol_size: 100
 role: master
 use_eips: true
