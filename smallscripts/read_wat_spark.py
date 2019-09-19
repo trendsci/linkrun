@@ -136,10 +136,11 @@ def main(sc):
 
 
         mode = "overwrite"
-        url = "jdbc:postgresql://localhost:10000/linkrundb"
+        url = "jdbc:postgresql://linkrundb.caf9edw1merh.us-west-2.rds.amazonaws.com:5432/linkrundb"
         properties = {"user": "postgres","password": "turtles21","driver": "org.postgresql.Driver"}
         rdd_df.write.jdbc(url=url, table="linkrun.mainstats", mode=mode, properties=properties)
-    except:
+    except Exception as e:
+        print("DB ERROR ==="*10,"\n>\n",e)
         pass
 
     #print("DataFrame====="*20)
