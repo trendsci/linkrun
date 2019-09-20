@@ -2,12 +2,13 @@
 
 ## MIGHT NEED TO RUN THIS USING:
 # spark-submit --packages org.apache.hadoop:hadoop-aws:2.7.0 ./path_to_this_python_code
-
 # might need to run in shell:
 # export PYSPARK_PYTHON=python3
 
 # submit jobs using:
 # $SPARK_HOME/bin/spark-submit --master spark://ip-10-0-0-11.us-west-2.compute.internal:7077  read_wat_spark.py
+# current server: ec2-35-163-37-42.us-west-2.compute.amazonaws.com
+
 
 # PORT forward to connect to db:
 # ssh -o ServerAliveInterval=10 -i sergey-IAM-keypair.pem -N -L 10000:localhost:5432 ubuntu@54.70.95.199
@@ -98,18 +99,22 @@ def main(sc):
     start_time = time.time()
 #    s3file = "s3://commoncrawl/crawl-data/CC-MAIN-2019-30/segments/1563195523840.34/wat/CC-MAIN-20190715175205-20190715200159-00024.warc.wat.gz"
     #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/head.wat"
-    #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/testwats/testcase2.wat"
+
     #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat.gz"
     #file_location = "s3a://commoncrawl/crawl-data/CC-MAIN-2019-30/segments/1563195523840.34/wat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat.gz"
 
-    number_of_files = 1
+    number_of_files = 2
     file_location = []
     with open("wat.paths","r") as f:
         for item in range(number_of_files):
             file_location.append("s3a://commoncrawl/"+f.readline().strip())
     file_location = ",".join(file_location)
+
+    #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/testwats/testcase3.wat"
+    #file_location += ",/home/sergey/projects/insight/mainproject/1/testwat/testwats/testcase2.wat"
+
     print("FILE LOCATION =="*3,file_location)
-    
+
     wat_lines = sc.textFile(file_location)
     #data = wat_lines.take(27)
     #print("27: ",data)
@@ -133,7 +138,7 @@ def main(sc):
     #print("COUNT = ",rdd.count())
 
     try:
-        if False:
+        if True:
             from pyspark.sql.context import SQLContext
             from pyspark.sql.types import StructType
             from pyspark.sql.types import StructField
@@ -145,12 +150,12 @@ def main(sc):
             spark = SparkSession(sc)
             rdd_df = rdd.toDF()
 
-
+            rdd_df.show(n=1000)
 
             mode = "overwrite"
             url = "jdbc:postgresql://linkrundb.caf9edw1merh.us-west-2.rds.amazonaws.com:5432/linkrundb"
             properties = {"user": "postgres","password": "turtles21","driver": "org.postgresql.Driver"}
-            rdd_df.write.jdbc(url=url, table="linkrun.mainstats", mode=mode, properties=properties)
+            rdd_df.write.jdbc(url=url, table="linkrun.mainstats3", mode=mode, properties=properties)
     except Exception as e:
         print("DB ERROR ==="*10,"\n>\n",e)
         pass
