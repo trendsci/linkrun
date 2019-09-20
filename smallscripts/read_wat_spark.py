@@ -79,8 +79,11 @@ def filter_links(json_links, page_subdomain, page_domain, page_suffix):
                     link_subdomain, link_domain, link_suffix = tldex.extract(link_url)
                     if link_domain not in excluded_domains:
                         if link_suffix not in excluded_suffixes:
-                            filtered_links.add(
-                            link_subdomain+"."+link_domain+"."+link_suffix)#,link_url)
+                            if link_subdomain == "":
+                                formatted_link = link_domain+"."+link_suffix
+                            else:
+                                formatted_link = link_subdomain+"."+link_domain+"."+link_suffix
+                            filtered_links.add(formatted_link)#,link_url)
             except Exception as e:
                 #print("Error in filter_links: ", e)
                 pass
@@ -97,7 +100,16 @@ def main(sc):
     #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/head.wat"
     #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/testwats/testcase2.wat"
     #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat.gz"
-    file_location = "s3a://commoncrawl/crawl-data/CC-MAIN-2019-30/segments/1563195523840.34/wat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat.gz"
+    #file_location = "s3a://commoncrawl/crawl-data/CC-MAIN-2019-30/segments/1563195523840.34/wat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat.gz"
+
+    number_of_files = 1
+    file_location = []
+    with open("wat.paths","r") as f:
+        for item in range(number_of_files):
+            file_location.append("s3a://commoncrawl/"+f.readline().strip())
+    file_location = ",".join(file_location)
+    print("FILE LOCATION =="*3,file_location)
+    
     wat_lines = sc.textFile(file_location)
     #data = wat_lines.take(27)
     #print("27: ",data)
@@ -121,24 +133,24 @@ def main(sc):
     #print("COUNT = ",rdd.count())
 
     try:
+        if False:
+            from pyspark.sql.context import SQLContext
+            from pyspark.sql.types import StructType
+            from pyspark.sql.types import StructField
+            from pyspark.sql.types import StringType
+            from pyspark.sql.types import DecimalType
 
-        from pyspark.sql.context import SQLContext
-        from pyspark.sql.types import StructType
-        from pyspark.sql.types import StructField
-        from pyspark.sql.types import StringType
-        from pyspark.sql.types import DecimalType
-
-        #schema = StructType(StringType(),DecimalType())
-        #df = SQLContext.createDataFrame(rdd, schema)
-        spark = SparkSession(sc)
-        rdd_df = rdd.toDF()
+            #schema = StructType(StringType(),DecimalType())
+            #df = SQLContext.createDataFrame(rdd, schema)
+            spark = SparkSession(sc)
+            rdd_df = rdd.toDF()
 
 
 
-        mode = "overwrite"
-        url = "jdbc:postgresql://linkrundb.caf9edw1merh.us-west-2.rds.amazonaws.com:5432/linkrundb"
-        properties = {"user": "postgres","password": "turtles21","driver": "org.postgresql.Driver"}
-        rdd_df.write.jdbc(url=url, table="linkrun.mainstats", mode=mode, properties=properties)
+            mode = "overwrite"
+            url = "jdbc:postgresql://linkrundb.caf9edw1merh.us-west-2.rds.amazonaws.com:5432/linkrundb"
+            properties = {"user": "postgres","password": "turtles21","driver": "org.postgresql.Driver"}
+            rdd_df.write.jdbc(url=url, table="linkrun.mainstats", mode=mode, properties=properties)
     except Exception as e:
         print("DB ERROR ==="*10,"\n>\n",e)
         pass

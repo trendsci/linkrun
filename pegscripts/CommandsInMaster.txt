@@ -7,3 +7,4 @@ export PYSPARK_PYTHON=python3
 
 Run spark job:
 $SPARK_HOME/bin/spark-submit ./read_wat_spark.py
+# remember to add --master and --packages if needed..
