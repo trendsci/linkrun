@@ -10,4 +10,3 @@ end_time=`date -u +%s`
 elapsed=$((end_time-start_time))
 printf "\n\n===============================\n"
 printf "Script run time: ${elapsed}s\n\n"
-
