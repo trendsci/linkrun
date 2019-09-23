@@ -24,6 +24,8 @@ import ujson as json
 import tldextract as tldex
 import time
 
+import boto3
+import argparse
 
 def get_json(line):
     try:
@@ -101,13 +103,25 @@ def main(sc):
     #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/head.wat"
 
     #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat.gz"
-
-    number_of_files = 1
+    parser = argparse.ArgumentParser(description='LinkRun python module')
+    parser.add_argument('--wats_number',
+            default=1,
+            type=int,
+            help='Specify number of .wat files to process')
+    parsed_args = parser.parse_args()
+    number_of_files = parsed_args.wats_number
     file_location = []
     try:
-        with open("/home/sergey/projects/insight/mainproject/data/wat.paths","r") as f:
-            for item in range(number_of_files):
-                file_location.append("s3a://commoncrawl/"+f.readline().strip())
+        s3 = boto3.client('s3')
+        s3_object = s3.get_object(Bucket="linkrun", Key="wat.paths")
+        current_file = s3_object["Body"]
+        current_file_iterator = current_file.iter_lines()
+        #print(next(current_file_iterator))
+        print("===!!!===="*20,dir(current_file))
+        #with open(current_file,"r") as f:
+        for item in range(number_of_files):
+            line = next(current_file_iterator).decode('utf-8')
+            file_location.append("s3a://commoncrawl/"+line.strip())
         file_location = ",".join(file_location)
     except Exception as e:
         print("Couldn't find wat.paths file.\n",e)
@@ -179,6 +193,8 @@ def main(sc):
 
 
 if __name__ == "__main__":
+
+
     conf = SparkConf()
     sc = SparkContext(conf=conf)
 
