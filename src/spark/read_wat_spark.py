@@ -20,7 +20,7 @@
 # submit in EMR cluter, check if correct:
 # spark-submit --deploy-mode cluster --master yarn --packages org.postgresql:postgresql:9.4.1207.jre7,org.apache.hadoop:hadoop-aws:2.7.0 ./src/spark/read_wat_spark.py --wat_number 4 --write_to_db 0
 
-# $SPARK_HOME/bin/spark-submit --packages  org.postgresql:postgresql:9.4.1207.jre7,org.apache.hadoop:hadoop-aws:2.7.0 src/spark/read_wat_spark.py --wat_number 0 --write_to_db 0 --db_table temp2
+# $SPARK_HOME/bin/spark-submit --packages  org.postgresql:postgresql:9.4.1207.jre7,org.apache.hadoop:hadoop-aws:2.7.0 src/spark/read_wat_spark.py --wat_number 0 --write_to_db 0 --db_table temp2  --verbose_output_rows 100
 
 
 from pyspark import SparkConf, SparkContext
