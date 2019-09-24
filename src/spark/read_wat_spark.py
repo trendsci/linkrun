@@ -20,6 +20,9 @@
 # submit in EMR cluter, check if correct:
 # spark-submit --deploy-mode cluster --master yarn --packages org.postgresql:postgresql:9.4.1207.jre7,org.apache.hadoop:hadoop-aws:2.7.0 ./src/spark/read_wat_spark.py --wat_number 4 --write_to_db 0
 
+# $SPARK_HOME/bin/spark-submit --packages  org.postgresql:postgresql:9.4.1207.jre7,org.apache.hadoop:hadoop-aws:2.7.0 src/spark/read_wat_spark.py --wat_number 0 --write_to_db 0 --db_table temp2
+
+
 from pyspark import SparkConf, SparkContext
 from pyspark.sql import SparkSession
 
@@ -92,9 +95,9 @@ def filter_links(json_links, page_subdomain, page_domain, page_suffix):
                     if link_domain not in excluded_domains:
                         if link_suffix not in excluded_suffixes:
                             if link_subdomain == "":
-                                formatted_link = link_domain+"."+link_suffix
+                                formatted_link = ("",link_domain+"."+link_suffix)
                             else:
-                                formatted_link = link_subdomain+"."+link_domain+"."+link_suffix
+                                formatted_link = (link_subdomain,link_domain+"."+link_suffix)
                             filtered_links.add(formatted_link)#,link_url)
             except Exception as e:
                 #print("Error in filter_links: ", e)
@@ -125,10 +128,16 @@ def main(sc):
             default="temp",
             type=str,
             help='Specify name of database table to write to. (default=temp)')
+    parser.add_argument('--verbose_output_rows',
+            default=10,
+            type=int,
+            help='How many rows of RDD to print to screen for debugging? (default=10)')
+
     parsed_args = parser.parse_args()
     number_of_files = parsed_args.wat_number
     write_to_db = parsed_args.write_to_db
     db_table = "linkrun."+parsed_args.db_table
+    verbose_output_rows = parsed_args.verbose_output_rows
     file_location = []
     try:
         s3 = boto3.client('s3')
@@ -143,6 +152,8 @@ def main(sc):
     except Exception as e:
         print("Couldn't find wat.paths file.\n",e)
     #file_location = "/home/sergey/projects/insight/mainproject_mvp_week2/1/testwat/testwats/testcase3.wat"
+    file_location = "/home/sergey/projects/insight/mainproject/1/testwat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat"
+
     if number_of_files == 0:
         file_location = "s3a://linkrun/testcase2.wat"
     #file_location = "s3a://commoncrawl/crawl-data/CC-MAIN-2019-30/segments/1563195523840.34/wat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat.gz"
@@ -162,7 +173,10 @@ def main(sc):
     .map(lambda x: (x[0],str(x[0][0]+"."+x[0][1]+"."+x[0][2]),*x[1:]))\
     .flatMap(lambda x: [(z,x[0],*x[1:-1]) for z in x[-1]])\
     .map(lambda x: (x[0],1))\
-    .reduceByKey(lambda x,y: x+y)#\
+    .reduceByKey(lambda x,y: x+y)\
+    .map(lambda x: (x[0][0],x[0][1],x[1]))
+
+
     #.map(lambda x: (x[1],x[0]))#\
     #.sortByKey(0).map(lambda x: (x[1],x[0])) #can do sorting if needed
 
@@ -187,7 +201,7 @@ def main(sc):
             spark = SparkSession(sc)
             rdd_df = rdd.toDF()
 
-            rdd_df.show(n=10)
+            rdd_df.show(n=verbose_output_rows)
 
             mode = "overwrite"
             url = "jdbc:postgresql://linkrundb.caf9edw1merh.us-west-2.rds.amazonaws.com:5432/linkrundb"
@@ -207,7 +221,7 @@ def main(sc):
     for line in view:
         print(i, line)
         i += 1
-        if i == 10: break
+        if i == verbose_output_rows: break
 
     #print(rdd.describe()) ##here working.
     run_time = time.time() - start_time
