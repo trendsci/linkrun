@@ -17,6 +17,9 @@
 # $SPARK_HOME/bin/spark-submit --packages  org.postgresql:postgresql:9.4.1207.jre7,org.apache.hadoop:hadoop-aws:2.7.0 ./read_wat_spark.py
 
 
+# submit in EMR cluter, check if correct:
+# spark-submit --deploy-mode cluster --master yarn --packages org.postgresql:postgresql:9.4.1207.jre7,org.apache.hadoop:hadoop-aws:2.7.0 ./src/spark/read_wat_spark.py --wat_number 4 --write_to_db 0
+
 from pyspark import SparkConf, SparkContext
 from pyspark.sql import SparkSession
 
@@ -29,7 +32,9 @@ import argparse
 
 def get_json(line):
     try:
+        line = line.lower()
         json_data = json.loads(line)
+        #print (line)
         return json_data
     except:
         pass
@@ -37,7 +42,9 @@ def get_json(line):
 
 def get_json_uri(json_line):
     try:
-        current_uri = json_line["Envelope"]["WARC-Header-Metadata"]["WARC-Target-URI"]
+        # Mixed caps (in original json):
+        #current_uri = json_line["Envelope"]["WARC-Header-Metadata"]["WARC-Target-URI"]
+        current_uri = json_line["envelope"]["warc-header-metadata"]["warc-target-uri"]
         #print("current uri: ",current_uri)
         return (current_uri, json_line)
     except Exception as e:
@@ -58,7 +65,9 @@ def parse_domain(uri):
 
 def get_json_links(json_line):
     try:
-        links = json_line["Envelope"]["Payload-Metadata"]["HTTP-Response-Metadata"]["HTML-Metadata"]["Links"]
+        # Mixed caps (in original json):
+        #links = json_line["Envelope"]["Payload-Metadata"]["HTTP-Response-Metadata"]["HTML-Metadata"]["Links"]
+        links = json_line["envelope"]["payload-metadata"]["http-response-metadata"]["html-metadata"]["links"]
         return links
     except Exception as e:
         #print("error: ",e)
@@ -75,7 +84,7 @@ def filter_links(json_links, page_subdomain, page_domain, page_suffix):
         for link in json_links:
             try:
                 #print("link path",link['path'])
-                if link['path'] == r"A@/href":
+                if link['path'] == r"a@/href":# r"A@/href":
                     #print("FOUND A@LINK!!!")
                     link_url = link['url']
                     #print("LINK URL",link_url)
@@ -104,21 +113,24 @@ def main(sc):
 
     #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat.gz"
     parser = argparse.ArgumentParser(description='LinkRun python module')
-    parser.add_argument('--wats_number',
+    parser.add_argument('--wat_number',
             default=1,
             type=int,
             help='Specify number of .wat files to process')
+    parser.add_argument('--write_to_db',
+            default=0,
+            type=int,
+            help='Should the job write output to database? (0/1)')
     parsed_args = parser.parse_args()
-    number_of_files = parsed_args.wats_number
+    number_of_files = parsed_args.wat_number
+    write_to_db = parsed_args.write_to_db
     file_location = []
     try:
         s3 = boto3.client('s3')
         s3_object = s3.get_object(Bucket="linkrun", Key="wat.paths")
         current_file = s3_object["Body"]
         current_file_iterator = current_file.iter_lines()
-        #print(next(current_file_iterator))
-        print("===!!!===="*20,dir(current_file))
-        #with open(current_file,"r") as f:
+
         for item in range(number_of_files):
             line = next(current_file_iterator).decode('utf-8')
             file_location.append("s3a://commoncrawl/"+line.strip())
@@ -126,7 +138,8 @@ def main(sc):
     except Exception as e:
         print("Couldn't find wat.paths file.\n",e)
     #file_location = "/home/sergey/projects/insight/mainproject_mvp_week2/1/testwat/testwats/testcase3.wat"
-    #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/testwats/testcase2.wat"
+    if number_of_files == 0:
+        file_location = "./data/testing/testcase2.wat"
     #file_location = "s3a://commoncrawl/crawl-data/CC-MAIN-2019-30/segments/1563195523840.34/wat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat.gz"
 
     print("FILE LOCATION =="*3,file_location)
@@ -154,7 +167,7 @@ def main(sc):
     #print("COUNT = ",rdd.count())
 
     try:
-        if True:
+        if write_to_db:
             from pyspark.sql.context import SQLContext
             from pyspark.sql.types import StructType
             from pyspark.sql.types import StructField
@@ -171,7 +184,7 @@ def main(sc):
             mode = "overwrite"
             url = "jdbc:postgresql://linkrundb.caf9edw1merh.us-west-2.rds.amazonaws.com:5432/linkrundb"
             properties = {"user": "postgres","password": "turtles21","driver": "org.postgresql.Driver"}
-            rdd_df.write.jdbc(url=url, table="linkrun.mainstats4", mode=mode, properties=properties)
+            rdd_df.write.jdbc(url=url, table="linkrun.mainstats5s", mode=mode, properties=properties)
     except Exception as e:
         print("DB ERROR ==="*10,"\n>\n",e)
         pass
@@ -182,6 +195,7 @@ def main(sc):
 
     view = rdd.collect()
     i = 0
+    print("RDD HEAD ===================")
     for line in view:
         print(i, line)
         i += 1
