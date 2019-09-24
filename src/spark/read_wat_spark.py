@@ -121,9 +121,14 @@ def main(sc):
             default=0,
             type=int,
             help='Should the job write output to database? (0/1)')
+    parser.add_argument('--db_table',
+            default="temp",
+            type=str,
+            help='Specify name of database table to write to. (default=temp)')
     parsed_args = parser.parse_args()
     number_of_files = parsed_args.wat_number
     write_to_db = parsed_args.write_to_db
+    db_table = "linkrun."+parsed_args.db_table
     file_location = []
     try:
         s3 = boto3.client('s3')
@@ -139,7 +144,7 @@ def main(sc):
         print("Couldn't find wat.paths file.\n",e)
     #file_location = "/home/sergey/projects/insight/mainproject_mvp_week2/1/testwat/testwats/testcase3.wat"
     if number_of_files == 0:
-        file_location = "s3://linkrun/testcase2.wat"
+        file_location = "s3a://linkrun/testcase2.wat"
     #file_location = "s3a://commoncrawl/crawl-data/CC-MAIN-2019-30/segments/1563195523840.34/wat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat.gz"
 
     print("FILE LOCATION =="*3,file_location)
@@ -157,9 +162,11 @@ def main(sc):
     .map(lambda x: (x[0],str(x[0][0]+"."+x[0][1]+"."+x[0][2]),*x[1:]))\
     .flatMap(lambda x: [(z,x[0],*x[1:-1]) for z in x[-1]])\
     .map(lambda x: (x[0],1))\
-    .reduceByKey(lambda x,y: x+y)\
-    .map(lambda x: (x[1],x[0]))\
-    .sortByKey(0).map(lambda x: (x[1],x[0]))
+    .reduceByKey(lambda x,y: x+y)#\
+    #.map(lambda x: (x[1],x[0]))#\
+    #.sortByKey(0).map(lambda x: (x[1],x[0])) #can do sorting if needed
+
+
     ##.map(lambda x: ( *parse_domain(x[0]), x[0], x[1] )     )\ #parse uri domain, uri, json
     #.map(lambda x: print("x0!!:",x[0],"\nX1!!:",x[1]))#(parse_domain(x[0]),x[1]))
 
@@ -168,11 +175,12 @@ def main(sc):
 
     try:
         if write_to_db:
-            from pyspark.sql.context import SQLContext
-            from pyspark.sql.types import StructType
-            from pyspark.sql.types import StructField
-            from pyspark.sql.types import StringType
-            from pyspark.sql.types import DecimalType
+            # Only need if I need datatypes in SparkSQl
+            #from pyspark.sql.context import SQLContext
+            #from pyspark.sql.types import StructType
+            #from pyspark.sql.types import StructField
+            #from pyspark.sql.types import StringType
+            #from pyspark.sql.types import DecimalType
 
             #schema = StructType(StringType(),DecimalType())
             #df = SQLContext.createDataFrame(rdd, schema)
@@ -184,7 +192,7 @@ def main(sc):
             mode = "overwrite"
             url = "jdbc:postgresql://linkrundb.caf9edw1merh.us-west-2.rds.amazonaws.com:5432/linkrundb"
             properties = {"user": "postgres","password": "turtles21","driver": "org.postgresql.Driver"}
-            rdd_df.write.jdbc(url=url, table="linkrun.mainstats5s", mode=mode, properties=properties)
+            rdd_df.write.jdbc(url=url, table=db_table, mode=mode, properties=properties)
     except Exception as e:
         print("DB ERROR ==="*10,"\n>\n",e)
         pass
@@ -211,14 +219,15 @@ if __name__ == "__main__":
 
 
     conf = SparkConf()
-    sc = SparkContext(conf=conf)
+    sc = SparkContext(conf=conf, appName="LinkRun main module")
 
     # Set the Credential Keys for AWS S3 Connection
-    awsAccessKeyId = "test" #os.environ.get('AWS_ACCESS_KEY_ID')
-    awsSecretAccessKey = "test" #os.environ.get('AWS_SECRET_ACCESS_KEY')
-    sc._jsc.hadoopConfiguration().set('fs.s3n.awsAccessKeyId',awsAccessKeyId)
-    sc._jsc.hadoopConfiguration().set('fs.s3n.awsSecretAccessKey',awsSecretAccessKey)
-    sc._jsc.hadoopConfiguration().set('fs.s3.endpoint','s3.us-east-1.amazonaws.com')
-    sc._jsc.hadoopConfiguration().set('fs.s3.impl','org.apache.hadoop.fs.s3native.NativeS3FileSystem')
+    # Only need if using a non-public s3
+    #awsAccessKeyId = "test" #os.environ.get('AWS_ACCESS_KEY_ID')
+    #awsSecretAccessKey = "test" #os.environ.get('AWS_SECRET_ACCESS_KEY')
+    #sc._jsc.hadoopConfiguration().set('fs.s3n.awsAccessKeyId',awsAccessKeyId)
+    #sc._jsc.hadoopConfiguration().set('fs.s3n.awsSecretAccessKey',awsSecretAccessKey)
+    #sc._jsc.hadoopConfiguration().set('fs.s3.endpoint','s3.us-east-1.amazonaws.com')
+    #sc._jsc.hadoopConfiguration().set('fs.s3.impl','org.apache.hadoop.fs.s3native.NativeS3FileSystem')
 
     main(sc)
