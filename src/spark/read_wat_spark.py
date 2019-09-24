@@ -126,7 +126,7 @@ def main(sc):
     except Exception as e:
         print("Couldn't find wat.paths file.\n",e)
     #file_location = "/home/sergey/projects/insight/mainproject_mvp_week2/1/testwat/testwats/testcase3.wat"
-    #file_location += ",/home/sergey/projects/insight/mainproject/1/testwat/testwats/testcase2.wat"
+    #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/testwats/testcase2.wat"
     #file_location = "s3a://commoncrawl/crawl-data/CC-MAIN-2019-30/segments/1563195523840.34/wat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat.gz"
 
     print("FILE LOCATION =="*3,file_location)
@@ -154,7 +154,7 @@ def main(sc):
     #print("COUNT = ",rdd.count())
 
     try:
-        if False:
+        if True:
             from pyspark.sql.context import SQLContext
             from pyspark.sql.types import StructType
             from pyspark.sql.types import StructField
@@ -166,7 +166,7 @@ def main(sc):
             spark = SparkSession(sc)
             rdd_df = rdd.toDF()
 
-            rdd_df.show(n=1000)
+            rdd_df.show(n=10)
 
             mode = "overwrite"
             url = "jdbc:postgresql://linkrundb.caf9edw1merh.us-west-2.rds.amazonaws.com:5432/linkrundb"
@@ -185,6 +185,7 @@ def main(sc):
     for line in view:
         print(i, line)
         i += 1
+        if i == 10: break
 
     #print(rdd.describe()) ##here working.
     run_time = time.time() - start_time
