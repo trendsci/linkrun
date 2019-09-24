@@ -139,7 +139,7 @@ def main(sc):
         print("Couldn't find wat.paths file.\n",e)
     #file_location = "/home/sergey/projects/insight/mainproject_mvp_week2/1/testwat/testwats/testcase3.wat"
     if number_of_files == 0:
-        file_location = "./data/testing/testcase2.wat"
+        file_location = "s3://linkrun/testcase2.wat"
     #file_location = "s3a://commoncrawl/crawl-data/CC-MAIN-2019-30/segments/1563195523840.34/wat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat.gz"
 
     print("FILE LOCATION =="*3,file_location)
