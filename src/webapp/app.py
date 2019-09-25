@@ -54,7 +54,9 @@ app.layout = html.Div(id = "maindiv",children=[
 
     dash_table.DataTable(
         id='link_pupolarity',
-        columns=[{"name":'Link',"id":"1"},{"name":'Number of linking pages',"id":"2"}],
+        columns=[{"name":'Link subdomain',"id":"1"},
+        {"name":'Link domain.tld',"id":"2"},
+        {"name":'Number of linking pages',"id":"3"}],
         data=[{"1":a,"2":b} for a,b in top_links],
         editable=True
     ),
@@ -79,31 +81,32 @@ app.layout = html.Div(id = "maindiv",children=[
     [State('user_link','value')]
 )
 def update_table(clicks,input_value):
+    print("User input:\n",input_value)
     try:
         try:
             number = int(input_value)
-            cur.execute("""SELECT * from linkrun.mainstats3
-            ORDER BY _2 DESC
+            cur.execute("""SELECT * from linkrun.temp500
+            ORDER BY _3 DESC
             LIMIT {};""".format(number))
             top_links = cur.fetchall()
-            return [{"1":a,"2":b} for a,b in top_links]
+            return [{"1":a,"2":b,"3":c} for a,b,c in top_links]
         except:
             pass
 
         #print(input_value, input_value[:4])
 
-        cur.execute("""SELECT * from linkrun.mainstats3
-        WHERE _1 = '{}'
-        OR _1 = '{}'
-        ORDER BY _2 DESC
-        LIMIT 5;""".format(input_value, input_value[4:])
+        cur.execute("""SELECT * from linkrun.temp500
+        WHERE _2 = '{}'
+        ORDER BY _3 DESC
+        LIMIT 1000;""".format(input_value)
         )
 
         top_links = cur.fetchall()
+        return [{"1":a,"2":b,"3":c} for a,b,c in top_links]
     except Exception as e:
         pass
         #print("exception: ",e)
-    return [{"1":a,"2":b} for a,b in top_links]
+
 
 if __name__ == '__main__':
     app.run_server()#debug=True)
