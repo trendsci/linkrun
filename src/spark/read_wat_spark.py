@@ -24,7 +24,7 @@
 
 
 ## bash execution command:
-# $SPARK_HOME/bin/spark-submit --packages  org.postgresql:postgresql:9.4.1207.jre7,org.apache.hadoop:hadoop-aws:2.7.0 src/spark/read_wat_spark.py --wat_number 0 --write_to_db 1 --db_table temp2  --verbose_output_rows 10 --wat_paths_file_s3bucket linkrun --wat_paths_file_s3key wat.paths --first_wat_file_number 0 --last_wat_file_number 0
+# $SPARK_HOME/bin/spark-submit --packages  org.postgresql:postgresql:9.4.1207.jre7,org.apache.hadoop:hadoop-aws:2.7.0 src/spark/read_wat_spark.py --testing_wat 0 --write_to_db 1 --db_table temp2  --verbose_output_rows 10 --wat_paths_file_s3bucket linkrun --wat_paths_file_s3key wat.paths --first_wat_file_number 0 --last_wat_file_number 0
 
 from pyspark import SparkConf, SparkContext
 from pyspark.sql import SparkSession
@@ -35,6 +35,8 @@ import time
 
 import boto3
 import argparse
+import gzip
+from io import BytesIO
 
 def get_json(line):
     try:
@@ -118,10 +120,10 @@ def main(sc):
     parser = argparse.ArgumentParser(description='LinkRun python module')
 
     # Will likely remobe --wat_number since I get this info in other arguments
-    parser.add_argument('--wat_number',
-            default=1,
+    parser.add_argument('--testing_wat',
+            default=0,
             type=int,
-            help='Specify number of .wat files to process')
+            help='Used for debugging. If set to 1, will use a testing wat file')
     parser.add_argument('--write_to_db',
             default=0,
             type=int,
@@ -146,17 +148,17 @@ def main(sc):
             help='Public S3 key pointing to wat.paths file')
 
     parser.add_argument('--first_wat_file_number',
-            default=0,
+            default=1,
             type=int,
-            help='First row in wat.paths to process (zero indexed)')
+            help='First row in wat.paths to process (1 is first file)')
     parser.add_argument('--last_wat_file_number',
-            default=0,
+            default=1,
             type=int,
             help='Last row in wat.paths to process (inclusive, will process this row)')
 
 
     parsed_args = parser.parse_args()
-    number_of_files = parsed_args.wat_number
+    testing_wat = parsed_args.testing_wat
     write_to_db = parsed_args.write_to_db
     db_table = "linkrun."+parsed_args.db_table
     verbose_output_rows = parsed_args.verbose_output_rows
@@ -170,23 +172,32 @@ def main(sc):
         s3 = boto3.client('s3')
         s3_object = s3.get_object(Bucket=wat_paths_file_s3bucket, Key=wat_paths_file_s3key)
         current_file = s3_object["Body"]
-        current_file_iterator = current_file.iter_lines()
+        current_file_bytestream = BytesIO(current_file.read())
+        #current_file_iterator = current_file.iter_lines()
+        # skip to the corret line
+        with gzip.open(current_file_bytestream, 'rb') as gzip_file:
+            if first_wat_file_number > 1:
+                gzip_file.readlines(first_wat_file_number-1)
 
-        for item in range(first_wat_file_number,last_wat_file_number+1):
-            line = next(current_file_iterator).decode('utf-8')
-            file_location.append("s3a://commoncrawl/"+line.strip())
+            for item in range(first_wat_file_number,last_wat_file_number+1):
+                line = gzip_file.readline().decode('utf-8')
+                #line = next(current_file_iterator).decode('utf-8')
+                file_location.append("s3a://commoncrawl/"+line.strip())
         file_location = ",".join(file_location)
     except Exception as e:
         print("Couldn't find wat.paths file.\n",e)
     #file_location = "/home/sergey/projects/insight/mainproject_mvp_week2/1/testwat/testwats/testcase3.wat"
     #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat"
 
-    if number_of_files == 0:
+    if testing_wat == 1:
         file_location = "s3a://linkrun/testcase2.wat"
     #file_location = "s3a://commoncrawl/crawl-data/CC-MAIN-2019-30/segments/1563195523840.34/wat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat.gz"
 
-    print("\n","="*10,"FILE LOCATION","="*10,"\n",file_location)
+    print("\n","="*10,"FILE LOCATION","="*10)
+    for i,name in enumerate(file_location.split(",")):
+        print(i,name)
 
+    
     wat_lines = sc.textFile(file_location)
     #data = wat_lines.take(27)
     #print("27: ",data)
@@ -259,7 +270,6 @@ def main(sc):
 
 
 if __name__ == "__main__":
-
 
     conf = SparkConf()
     sc = SparkContext(conf=conf, appName="LinkRun main module")
