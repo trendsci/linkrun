@@ -23,6 +23,9 @@
 # $SPARK_HOME/bin/spark-submit --packages  org.postgresql:postgresql:9.4.1207.jre7,org.apache.hadoop:hadoop-aws:2.7.0 src/spark/read_wat_spark.py --wat_number 0 --write_to_db 0 --db_table temp2  --verbose_output_rows 100
 
 
+## bash execution command:
+# $SPARK_HOME/bin/spark-submit --packages  org.postgresql:postgresql:9.4.1207.jre7,org.apache.hadoop:hadoop-aws:2.7.0 src/spark/read_wat_spark.py --wat_number 0 --write_to_db 1 --db_table temp2  --verbose_output_rows 10 --wat_paths_file_s3bucket linkrun --wat_paths_file_s3key wat.paths --first_wat_file_number 0 --last_wat_file_number 0
+
 from pyspark import SparkConf, SparkContext
 from pyspark.sql import SparkSession
 
@@ -111,11 +114,10 @@ def filter_links(json_links, page_subdomain, page_domain, page_suffix):
 
 def main(sc):
     start_time = time.time()
-#    s3file = "s3://commoncrawl/crawl-data/CC-MAIN-2019-30/segments/1563195523840.34/wat/CC-MAIN-20190715175205-20190715200159-00024.warc.wat.gz"
-    #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/head.wat"
 
-    #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat.gz"
     parser = argparse.ArgumentParser(description='LinkRun python module')
+
+    # Will likely remobe --wat_number since I get this info in other arguments
     parser.add_argument('--wat_number',
             default=1,
             type=int,
@@ -133,32 +135,57 @@ def main(sc):
             type=int,
             help='How many rows of RDD to print to screen for debugging? (default=10)')
 
+    parser.add_argument('--wat_paths_file_s3bucket',
+            default='linkrun',
+            type=str,
+            help='Public S3 bucket with wat.paths file')
+
+    parser.add_argument('--wat_paths_file_s3key',
+            default='wat.paths',
+            type=str,
+            help='Public S3 key pointing to wat.paths file')
+
+    parser.add_argument('--first_wat_file_number',
+            default=0,
+            type=int,
+            help='First row in wat.paths to process (zero indexed)')
+    parser.add_argument('--last_wat_file_number',
+            default=0,
+            type=int,
+            help='Last row in wat.paths to process (inclusive, will process this row)')
+
+
     parsed_args = parser.parse_args()
     number_of_files = parsed_args.wat_number
     write_to_db = parsed_args.write_to_db
     db_table = "linkrun."+parsed_args.db_table
     verbose_output_rows = parsed_args.verbose_output_rows
+    wat_paths_file_s3bucket = parsed_args.wat_paths_file_s3bucket
+    wat_paths_file_s3key = parsed_args.wat_paths_file_s3key
+    first_wat_file_number = parsed_args.first_wat_file_number
+    last_wat_file_number = parsed_args.last_wat_file_number
+
     file_location = []
     try:
         s3 = boto3.client('s3')
-        s3_object = s3.get_object(Bucket="linkrun", Key="wat.paths")
+        s3_object = s3.get_object(Bucket=wat_paths_file_s3bucket, Key=wat_paths_file_s3key)
         current_file = s3_object["Body"]
         current_file_iterator = current_file.iter_lines()
 
-        for item in range(number_of_files):
+        for item in range(first_wat_file_number,last_wat_file_number+1):
             line = next(current_file_iterator).decode('utf-8')
             file_location.append("s3a://commoncrawl/"+line.strip())
         file_location = ",".join(file_location)
     except Exception as e:
         print("Couldn't find wat.paths file.\n",e)
     #file_location = "/home/sergey/projects/insight/mainproject_mvp_week2/1/testwat/testwats/testcase3.wat"
-    file_location = "/home/sergey/projects/insight/mainproject/1/testwat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat"
+    #file_location = "/home/sergey/projects/insight/mainproject/1/testwat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat"
 
     if number_of_files == 0:
         file_location = "s3a://linkrun/testcase2.wat"
     #file_location = "s3a://commoncrawl/crawl-data/CC-MAIN-2019-30/segments/1563195523840.34/wat/CC-MAIN-20190715175205-20190715200159-00000.warc.wat.gz"
 
-    print("FILE LOCATION =="*3,file_location)
+    print("\n","="*10,"FILE LOCATION","="*10,"\n",file_location)
 
     wat_lines = sc.textFile(file_location)
     #data = wat_lines.take(27)
@@ -199,9 +226,11 @@ def main(sc):
             #schema = StructType(StringType(),DecimalType())
             #df = SQLContext.createDataFrame(rdd, schema)
             spark = SparkSession(sc)
+            df_columns = ["domain","count","subdomain"]
             rdd_df = rdd.toDF()
 
-            rdd_df.show(n=verbose_output_rows)
+            if verbose_output_rows != 0:
+                rdd_df.show(n=verbose_output_rows)
 
             mode = "overwrite"
             url = "jdbc:postgresql://linkrundb.caf9edw1merh.us-west-2.rds.amazonaws.com:5432/linkrundb"
@@ -211,17 +240,17 @@ def main(sc):
         print("DB ERROR ==="*10,"\n>\n",e)
         pass
 
-    #print("DataFrame====="*20)
-    #print(rdd_df.show())
-    #rdd_df.write.jdbc(url=url, table="linkrun.mainstats", mode=mode, properties=properties)
-
-    view = rdd.collect()
-    i = 0
-    print("RDD HEAD ===================")
-    for line in view:
-        print(i, line)
-        i += 1
-        if i == verbose_output_rows: break
+    # If verbose output is requested:
+    if verbose_output_rows != 0:
+        #view = rdd.collect()
+        view = rdd.take(verbose_output_rows)
+        i = 0
+        print("\n","="*10,"RDD HEAD","="*10)
+        for line in view:
+            print(i, line)
+            i += 1
+            if i == verbose_output_rows: break
+        print("="*10,"END OF RDD HEAD","="*10)
 
     #print(rdd.describe()) ##here working.
     run_time = time.time() - start_time
