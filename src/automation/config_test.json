@@ -7,30 +7,30 @@
     "linkrun_done": 0,
     "action": "do_line",
     "first_wat_file_number": 1,
-    "last_wat_file_number": 1,
-    "output_table": "linkrundb_35_8_2019_first1_last1"
+    "last_wat_file_number": 1000,
+    "output_table": "linkrundb_35_8_2019_first1_last1000"
   },
   {
-    "id": "CC-MAIN-2019-30",
-    "name": "July 2019 Index",
-    "month": 7,
+    "id": "CC-MAIN-2019-35",
+    "name": "August 2019 Index",
+    "month": 8,
     "year": 2019,
     "linkrun_done": 0,
     "action": "do_line",
-    "first_wat_file_number": 1,
-    "last_wat_file_number": 1,
-    "output_table": "linkrundb_30_7_2019_first1_last1"
+    "first_wat_file_number": 1001,
+    "last_wat_file_number": 2000,
+    "output_table": "linkrundb_35_8_2019_first1001_last2000"
   },
   {
-    "id": "CC-MAIN-2018-30",
-    "name": "July 2018 Index",
-    "month": 7,
-    "year": 2018,
+    "id": "CC-MAIN-2019-35",
+    "name": "August 2019 Index",
+    "month": 8,
+    "year": 2019,
     "linkrun_done": 0,
     "action": "do_line",
-    "first_wat_file_number": 1,
-    "last_wat_file_number": 1,
-    "output_table": "linkrundb_30_7_2018_first1_last1"
-  }
+    "first_wat_file_number": 2001,
+    "last_wat_file_number": 3000,
+    "output_table": "linkrundb_35_8_2019_first2001_last3000"
+  },
 
 ]

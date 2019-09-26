@@ -1,0 +1,25 @@
+Job: 
+database_table_namecommoncrawl_directory_name: CC-MAIN-2019-35
+database_table_name: linkrundb_35_8_2019_first1_last1
+first_wat_file_number: 1
+last_wat_file_number1
+Total job run time (seconds): 18.32271981239319
+
+Job: 
+database_table_namecommoncrawl_directory_name: CC-MAIN-2019-30
+database_table_name: linkrundb_30_7_2019_first1_last1
+first_wat_file_number: 1
+last_wat_file_number1
+Total job run time (seconds): 36.00969910621643
+
+Job: 
+database_table_namecommoncrawl_directory_name: CC-MAIN-2018-30
+database_table_name: linkrundb_30_7_2018_first1_last1
+first_wat_file_number: 1
+last_wat_file_number1
+Total job run time (seconds): 56.635690450668335
+
+Finished automation job.
+Time for entire automation run (seconds): 56.635945081710815
+==========
+
