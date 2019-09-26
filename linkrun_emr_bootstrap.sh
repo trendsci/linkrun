@@ -7,7 +7,7 @@ sudo python3 -m pip install boto3
 sudo python3 -m pip install --upgrade requests
 
 
-export PYSPARK_PYTHON=python3
+#export PYSPARK_PYTHON=python3
 
 cd ~
 
