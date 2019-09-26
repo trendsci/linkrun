@@ -1,0 +1,24 @@
+[
+  {
+    "id": "CC-MAIN-2019-35",
+    "name": "August 2019 Index",
+    "month": 8,
+    "year": 2019,
+    "linkrun_done": 0,
+    "action": "do_line",
+    "first_line_to_read": 1,
+    "last_line_to_read": 1,
+    "output_table": "auto"
+  },
+  {
+    "id": "CC-MAIN-2019-30",
+    "name": "July 2019 Index",
+    "month": 7,
+    "year": 2019,
+    "linkrun_done": 0,
+    "action": "do_line",
+    "first_line_to_read": 1,
+    "last_line_to_read": 1,
+    "output_table": "auto"
+  }
+]
