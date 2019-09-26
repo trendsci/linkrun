@@ -26,6 +26,10 @@
 ## bash execution command:
 # $SPARK_HOME/bin/spark-submit --packages  org.postgresql:postgresql:9.4.1207.jre7,org.apache.hadoop:hadoop-aws:2.7.0 src/spark/read_wat_spark.py --testing_wat 0 --write_to_db 1 --db_table temp2  --verbose_output_rows 10 --wat_paths_file_s3bucket linkrun --wat_paths_file_s3key wat.paths --first_wat_file_number 0 --last_wat_file_number 0
 
+
+#most recent submit script=
+#spark-submit --deploy-mode client --master yarn --packages org.postgresql:postgresql:9.4.1207.jre7,org.apache.hadoop:hadoop-aws:2.7.0 src/spark/read_wat_spark.py --testing_wat 0 --write_to_db 1 --db_table temper_11  --verbose_output_rows 10 --wat_paths_file_s3bucket commoncrawl --wat_paths_file_s3key crawl-data/CC-MAIN-2019-35/wat.paths.gz --first_wat_file_number 1 --last_wat_file_number 3
+
 from pyspark import SparkConf, SparkContext
 from pyspark.sql import SparkSession
 
@@ -197,7 +201,7 @@ def main(sc):
     for i,name in enumerate(file_location.split(",")):
         print(i,name)
 
-    
+
     wat_lines = sc.textFile(file_location)
     #data = wat_lines.take(27)
     #print("27: ",data)
