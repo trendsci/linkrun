@@ -11,7 +11,7 @@ sudo python3 -m pip install --upgrade requests
 
 cd ~
 
-echo 'LinkRun definitions below:' >> .bashrc
+echo '# LinkRun definitions below:' >> .bashrc
 echo 'export PYSPARK_PYTHON=python3' >> .bashrc
 echo 'git clone https://github.com/trendsci/linkrun.git' > gitclone.sh
 chmod +x gitclone.sh

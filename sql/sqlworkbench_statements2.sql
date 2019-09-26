@@ -3,7 +3,7 @@ CREATE DATABASE linkrundb;
 
 CREATE SCHEMA linkrun;
 
-DROP TABLE linkrun.temp2;
+DROP TABLE linkrun.temp2_07_2019;
 CREATE TABLE IF NOT EXISTS linkrun.mainstats5 (
 link_id TEXT PRIMARY KEY,
 link_occurance int
@@ -51,18 +51,31 @@ LIMIT 1000;
 
 
 SELECT _2, sum(_3) as sum_3 from linkrun.temp500
-WHERE _2 = 'facebook.com'
+--WHERE _2 = 'facebook.com'
 GROUP BY _2
 ORDER BY sum_3 DESC
 LIMIT 1000;
 
-
+--EXPLAIN
 SELECT * from linkrun.temp500
-WHERE _2 = 'facebook.com'
+--WHERE _2 = 'facebook.com'
 ORDER BY _3 DESC
 LIMIT 1000;
 
 
+EXPLAIN
+SELECT * from linkrun.temp500
+WHERE _2 = 'bird.com'
+ORDER BY _3 DESC
+LIMIT 1000;
+
+
+SELECT * INTO linkrun.temp500copy FROM linkrun.temp500;
+
+DROP TABLE linkrun.temp500copy;
+
+CREATE INDEX idx_domain_suffix
+ON linkrun.temp500copy(_3 DESC);
 
 
 SELECT *, (t1._3 + t2._3) as s FROM linkrun.linkrundb_30_7_2019_first1_last1 as t1
@@ -70,3 +83,4 @@ JOIN linkrun.linkrundb_30_7_2018_first1_last1 as t2
 ON (t1._2 = t2._2 AND t1._1 = t2._1)
 WHERE t1._2 = 'facebook.com'
 AND t1._1 = $$ru-ru$$;
+
