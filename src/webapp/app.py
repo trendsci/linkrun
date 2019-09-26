@@ -16,30 +16,19 @@ conn = pg.connect(host=r"linkrundb.caf9edw1merh.us-west-2.rds.amazonaws.com",
                 dbname="linkrundb", user="postgres", password="turtles21")
 
 cur = conn.cursor()
-cur.execute("""SELECT _1,_2 from linkrun.mainstats3
-where _1 = 'www.dsw.com'
-OR _1 = 'www.macys.com'
-OR _1 = 'www.google.com'
-OR _1 = 'google.com'
-;""")
-printall(cur)
-
-cur.execute("""SELECT COUNT(*) from linkrun.mainstats3
-;""")
-printall(cur)
-
-cur.execute("""SELECT * from linkrun.mainstats3
-ORDER BY _2 DESC
-LIMIT 20;""")
-
+cur.execute("""
+SELECT * FROM linkrun.temp500copy
+ORDER BY _3 DESC
+LIMIT 20;
+""")
 top_links = cur.fetchall()
 
 #print([i for i in top100])
 
 
-#external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
-app = dash.Dash(__name__)#, external_stylesheets=external_stylesheets)
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 app.layout = html.Div(id = "maindiv",children=[
     html.H1(children='LinkRun'),
@@ -57,7 +46,7 @@ app.layout = html.Div(id = "maindiv",children=[
         columns=[{"name":'Link subdomain',"id":"1"},
         {"name":'Link domain.tld',"id":"2"},
         {"name":'Number of linking pages',"id":"3"}],
-        data=[{"1":a,"2":b} for a,b in top_links],
+        data=[{"1":a,"2":b,"3":c} for a,b,c in top_links],
         editable=True
     ),
 
@@ -76,33 +65,52 @@ app.layout = html.Div(id = "maindiv",children=[
 ])
 
 @app.callback(
-    Output(component_id='link_pupolarity', component_property='data'),
+    [Output(component_id='link_pupolarity', component_property='data'),
+    Output(component_id='link_pupolarity', component_property='columns')],
     [Input(component_id='search', component_property='n_clicks')],
     [State('user_link','value')]
 )
 def update_table(clicks,input_value):
-    print("User input:\n",input_value)
+    print("User input:\n",input_value,"\n")
+    input_value_list = input_value.split(",")
+    print("User input list:\n",input_value_list,"\n")
     try:
         try:
             number = int(input_value)
-            cur.execute("""SELECT * from linkrun.temp500
+            cur.execute("""SELECT * from linkrun.temp500copy
             ORDER BY _3 DESC
             LIMIT {};""".format(number))
             top_links = cur.fetchall()
-            return [{"1":a,"2":b,"3":c} for a,b,c in top_links]
+            return [{"1":a,"2":b,"3":c} for a,b,c in top_links], [{"name":'Link subdomain',"id":"1"},{"name":'Link domain.tld',"id":"2"},{"name":'Number of linking pages',"id":"3"}]
         except:
             pass
 
         #print(input_value, input_value[:4])
 
-        cur.execute("""SELECT * from linkrun.temp500
-        WHERE _2 = '{}'
-        ORDER BY _3 DESC
-        LIMIT 1000;""".format(input_value)
-        )
+        # generate SQL statment:
+        # WORKING ON THIS!
+        sql_where_clause = "WHERE "
+        for entry in input_value_list:
+            sql_where_clause += "_2 = '{}' OR ".format(str(entry))
+        else:
+            sql_where_clause = sql_where_clause[:-3]
+        # sql_command = """SELECT * from linkrun.temp500copy
+        # {}
+        # AND _3 > 1
+        # ORDER BY _3 DESC
+        # LIMIT 1000;""".format(sql_where_clause)
+        sql_command = """SELECT _2, sum(_3) as sum_3 from linkrun.temp500copy
+        {}
+        --AND _3 > 1
+        GROUP BY _2
+        ORDER BY sum_3 DESC
+        LIMIT 1000;""".format(sql_where_clause)
+        print(sql_command)
+        cur.execute(sql_command)
 
         top_links = cur.fetchall()
-        return [{"1":a,"2":b,"3":c} for a,b,c in top_links]
+        return [{"2":a,"3":b} for a,b in top_links], [{"name":'Link domain.tld',"id":"2"},
+        {"name":'Number of linking pages',"id":"3"}],
     except Exception as e:
         pass
         #print("exception: ",e)
