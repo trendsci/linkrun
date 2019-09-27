@@ -48,7 +48,7 @@ from io import BytesIO
 def get_json(line):
     try:
         line = line.lower()
-        json_data = json.loads(line)
+        json_data = json.loads(line.replace(u'\0000',''))
         #print (line)
         return json_data
     except:
@@ -231,8 +231,8 @@ def main(sc):
 
     #.map(lambda z: print(type(z)))
     #print("COUNT = ",rdd.count())
-
-    try:
+    if True: #put the try back. this if is for testing
+    #try:
         if write_to_db:
             # Only need if I need datatypes in SparkSQl
             #from pyspark.sql.context import SQLContext
@@ -254,9 +254,10 @@ def main(sc):
             url = "jdbc:postgresql://linkrundb.caf9edw1merh.us-west-2.rds.amazonaws.com:5432/linkrundb"
             properties = {"user": "postgres","password": "turtles21","driver": "org.postgresql.Driver"}
             rdd_df.write.jdbc(url=url, table=db_table, mode=mode, properties=properties)
-    except Exception as e:
-        print("DB ERROR ==="*10,"\n>\n",e)
-        pass
+    # remove comments, need this except.
+    # except Exception as e:
+    #     print("DB ERROR ==="*10,"\n>\n",e)
+    #     pass
 
     # If verbose output is requested:
     if verbose_output_rows != 0:
