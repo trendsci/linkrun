@@ -30,6 +30,9 @@
 #most recent submit script=
 #spark-submit --deploy-mode client --master yarn --packages org.postgresql:postgresql:9.4.1207.jre7,org.apache.hadoop:hadoop-aws:2.7.0 src/spark/read_wat_spark.py --testing_wat 0 --write_to_db 1 --db_table temper_11  --verbose_output_rows 10 --wat_paths_file_s3bucket commoncrawl --wat_paths_file_s3key crawl-data/CC-MAIN-2019-35/wat.paths.gz --first_wat_file_number 1 --last_wat_file_number 3
 
+# add to large jobs:
+# --conf "spark.decommissioning.timeout.threshold=360"
+
 from pyspark import SparkConf, SparkContext
 from pyspark.sql import SparkSession
 

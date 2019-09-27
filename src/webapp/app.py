@@ -26,29 +26,51 @@ top_links = cur.fetchall()
 #print([i for i in top100])
 
 
-external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
+#external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
-app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+app = dash.Dash(__name__)#, external_stylesheets=external_stylesheets)
 
-app.layout = html.Div(id = "maindiv",children=[
-    html.H1(children='LinkRun'),
+app.layout = \
+    html.Div(id = "centering_div",
+    style={'text-align':'center'},
+    children=[
+        html.Div(id = "maindiv",
+        style={'width': '70%','display': 'inline-block'},
+        children=[
+        html.H1(children='LinkRun'),
 
-    html.Div(children='''
-        Website link-back popularity ranking.
-    '''),
+        html.Div(children='''
+            Website link-back popularity ranking
+        ''',style={'font-size':'18px'}),
+        #html.Br(),
 
-    dcc.Input(id='user_link', value='20', type='text'),
+        html.Pre(children='''
+            Enter a number to view top sites, or a comma separated lists of sites.
+            E.g. "20", "facebook.com,google.com", "target.com,walmart.com"
+        '''),
+        dcc.Input(
+            id='user_link',
+            value='20',
+            type='text',
+            style={'width':'100%',
+                    'font-size':'18px'}
+            ),
 
-    html.Button("Submit (number or website)",id="search"),
+        html.Button("Submit (number or website)",
+            id="search",
+            style={'font-size':'14px'}
+            ),
 
-    dash_table.DataTable(
-        id='link_pupolarity',
-        columns=[{"name":'Link subdomain',"id":"1"},
-        {"name":'Link domain.tld',"id":"2"},
-        {"name":'Number of linking pages',"id":"3"}],
-        data=[{"1":a,"2":b,"3":c} for a,b,c in top_links],
-        editable=True
-    ),
+        html.Br(),html.Br(),
+
+        dash_table.DataTable(
+            id='link_pupolarity',
+            columns=[{"name":'Link subdomain',"id":"1"},
+            {"name":'Link domain.tld',"id":"2"},
+            {"name":'Number of linking pages',"id":"3"}],
+            data=[{"1":a,"2":b,"3":c} for a,b,c in top_links],
+            editable=True
+        )
 
     # dcc.Graph(
     #     id='example-graph',
@@ -63,6 +85,8 @@ app.layout = html.Div(id = "maindiv",children=[
     #     }
     # )
 ])
+]
+)
 
 @app.callback(
     [Output(component_id='link_pupolarity', component_property='data'),
