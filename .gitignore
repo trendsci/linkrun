@@ -9,3 +9,5 @@ tmp/
 jars/
 data/
 pegscripts/
+sql/
+logs/
