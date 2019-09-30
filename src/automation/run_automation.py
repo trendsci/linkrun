@@ -30,6 +30,8 @@ def main():
         testing_wat = 1 # 0 = common crawl wats, 1 = small test wat file
         if job['linkrun_done'] == 0:
             spark_job_command = """{spark_submit_command} \
+                --deploy-mode client --master yarn \
+                --conf "spark.decommissioning.timeout.threshold=360" \
                 --packages org.postgresql:postgresql:9.4.1207.jre7,org.apache.hadoop:hadoop-aws:2.7.0 \
                 {spark_job_python_source} --testing_wat {testing_wat} --write_to_db 1 \
                 --db_table {database_table_name}  \
