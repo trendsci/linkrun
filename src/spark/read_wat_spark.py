@@ -28,7 +28,7 @@ def get_json(line):
     replaces UTF8 0x00 (null) characters with '' (empty string),
     and returns a JSON dictionay object.
     Replacing 0x00 characters is required since they cannot be written
-    to postgres.
+    to postgres varchar field.
 
     If input string is not in JSON format, skipps line and returns None.
 
@@ -191,7 +191,7 @@ def main(spark_context):
     parsed_args = parser.parse_args()
     testing_wat = parsed_args.testing_wat
     write_to_db = parsed_args.write_to_db
-    db_table = "linkrun."+parsed_args.db_table
+    db_table = parsed_args.db_table
     verbose_output_rows = parsed_args.verbose_output_rows
     wat_paths_file_s3bucket = parsed_args.wat_paths_file_s3bucket
     wat_paths_file_s3key = parsed_args.wat_paths_file_s3key

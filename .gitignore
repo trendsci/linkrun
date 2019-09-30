@@ -5,3 +5,7 @@ old_ignore/
 sampledata/
 personal_notes/
 secrets/
+tmp/
+jars/
+data/
+pegscripts/
