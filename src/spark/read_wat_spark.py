@@ -1,87 +1,92 @@
 #! /usr/bin/python3
+"""
+This script reads Common Crawl WAT files, parses and analyzez the JSON data
+from WAT files and outputs, and produces a list of number of
+linkbacks per domain (at a subdomain granularity).
 
-## MIGHT NEED TO RUN THIS USING:
-# spark-submit --packages org.apache.hadoop:hadoop-aws:2.7.0 ./path_to_this_python_code
-# might need to run in shell:
-# export PYSPARK_PYTHON=python3
+This job uses Spark to run this distributed ETL job.
+"""
 
-# submit jobs using:
-# $SPARK_HOME/bin/spark-submit --master spark://ip-10-0-0-11.us-west-2.compute.internal:7077  read_wat_spark.py
-# current server: ec2-35-163-37-42.us-west-2.compute.amazonaws.com
+import time
+import gzip
+import argparse
+from io import BytesIO
 
-
-# PORT forward to connect to db:
-# ssh -o ServerAliveInterval=10 -i sergey-IAM-keypair.pem -N -L 10000:localhost:5432 ubuntu@54.70.95.199
-
-## if missing packages, can run:
-# $SPARK_HOME/bin/spark-submit --packages  org.postgresql:postgresql:9.4.1207.jre7,org.apache.hadoop:hadoop-aws:2.7.0 ./read_wat_spark.py
-
-
-# submit in EMR cluter, check if correct:
-# spark-submit --deploy-mode cluster --master yarn --packages org.postgresql:postgresql:9.4.1207.jre7,org.apache.hadoop:hadoop-aws:2.7.0 ./src/spark/read_wat_spark.py --wat_number 4 --write_to_db 0
-
-# $SPARK_HOME/bin/spark-submit --packages  org.postgresql:postgresql:9.4.1207.jre7,org.apache.hadoop:hadoop-aws:2.7.0 src/spark/read_wat_spark.py --wat_number 0 --write_to_db 0 --db_table temp2  --verbose_output_rows 100
-
-
-## bash execution command:
-# $SPARK_HOME/bin/spark-submit --packages  org.postgresql:postgresql:9.4.1207.jre7,org.apache.hadoop:hadoop-aws:2.7.0 src/spark/read_wat_spark.py --testing_wat 0 --write_to_db 1 --db_table temp2  --verbose_output_rows 10 --wat_paths_file_s3bucket linkrun --wat_paths_file_s3key wat.paths --first_wat_file_number 0 --last_wat_file_number 0
-
-
-#most recent submit script=
-#spark-submit --deploy-mode client --master yarn --packages org.postgresql:postgresql:9.4.1207.jre7,org.apache.hadoop:hadoop-aws:2.7.0 src/spark/read_wat_spark.py --testing_wat 0 --write_to_db 1 --db_table temper_11  --verbose_output_rows 10 --wat_paths_file_s3bucket commoncrawl --wat_paths_file_s3key crawl-data/CC-MAIN-2019-35/wat.paths.gz --first_wat_file_number 1 --last_wat_file_number 3
-
-# add to large jobs:
-# --conf "spark.decommissioning.timeout.threshold=360"
+import ujson as json
+import tldextract as tldex
+import boto3
 
 from pyspark import SparkConf, SparkContext
 from pyspark.sql import SparkSession
 
-import ujson as json
-import tldextract as tldex
-import time
-
-import boto3
-import argparse
-import gzip
-from io import BytesIO
 
 def get_json(line):
+    """Reads in string and returns JSON dictionary object.
+
+    Reads a string, converts it to lowercase,
+    replaces UTF8 0x00 (null) characters with '' (empty string),
+    and returns a JSON dictionay object.
+    Replacing 0x00 characters is required since they cannot be written
+    to postgres.
+
+    If input string is not in JSON format, skipps line and returns None.
+
+    Args:
+        line: a string in JSON format.
+
+    Returns:
+        Dictionary (containing JSON data).
+    """
     try:
         line = line.lower()
-        json_data = json.loads(line.replace(u'\0000',''))
-        #print (line)
+        json_data = json.loads(line.replace(u'\0000', ''))
         return json_data
-    except:
+    except Exception as e:
         pass
 
 
 def get_json_uri(json_line):
+    """Returns the URI of page from JSON data.
+
+    Args:
+        json_line: dictionary with JSON data.
+
+    Returns:
+        (current_uri, json_line): the current URI,
+            and the original JSON dictionary.
+    """
     try:
-        # Mixed caps (in original json):
-        #current_uri = json_line["Envelope"]["WARC-Header-Metadata"]["WARC-Target-URI"]
         current_uri = json_line["envelope"]["warc-header-metadata"]["warc-target-uri"]
-        #print("current uri: ",current_uri)
         return (current_uri, json_line)
     except Exception as e:
         pass
-        #print("No Target URI")
-        #print("error: ",e)
 
 def parse_domain(uri):
+    """Parse URI into subdomain, domain, and suffix (top level domain).
+
+    Args:
+        URI: full URI
+
+    Returns:
+        subdomain, domain, suffix (top level domain)
+    """
     try:
-        ##print("URI!! ",type(uri),"\n",uri)
         subdomain, domain, suffix = tldex.extract(uri)
-        ##print("parsed!!: ",subdomain, domain, suffix)
-        #return subdomain + "." + domain + "." + suffix
         return subdomain, domain, suffix
     except Exception as e:
         #print("error:",e)
         pass
 
 def get_json_links(json_line):
+    """Return a list of links from the WAT JSON data.
+
+    Args:
+        json_line: dictionary with JSON data.
+
+    Returns:
+        list of dictionaries each containing a link URL, tag type, and text.
+    """
     try:
-        # Mixed caps (in original json):
-        #links = json_line["Envelope"]["Payload-Metadata"]["HTTP-Response-Metadata"]["HTML-Metadata"]["Links"]
         links = json_line["envelope"]["payload-metadata"]["http-response-metadata"]["html-metadata"]["links"]
         return links
     except Exception as e:
@@ -89,12 +94,26 @@ def get_json_links(json_line):
         pass
 
 def filter_links(json_links, page_subdomain, page_domain, page_suffix):
-    #print("filtering these links")
-    #print("json_links: ",json_links, "\npage_subdomain: ", page_subdomain,
-    #"\npage_domain: ", page_domain, "\npage_suffix: ", page_suffix)
-    filtered_links = set()#[]
+    """Filters out links based on set criteria.
+
+    Filters out all links that are not in an <a href='...'>. Filters out links
+    that point to the same domain as the original page they are on, links that
+    have no domain (i.e. they point to pages on the same domain as the current
+    page), links that call javascript functions, and links without a suffix (no
+    top level domain).
+
+    Args:
+        json_links: links in JSON format.
+        page_subdomain: current page subdomain.
+        page_domain: current page domain.
+        page_suffix: curernt page suffix (top level domain)
+
+    Returns:
+        Set containing tuples of (link_subdomain, link_domain_and_suffix).
+    """
+    filtered_links = set()
     excluded_domains = [page_domain, "", "javascript"]
-    excluded_suffixes = [""] #if no suffix, likely not a valid url
+    excluded_suffixes = [""]  # if there's no suffix, likely not a valid url
     try:
         for link in json_links:
             try:
@@ -107,14 +126,13 @@ def filter_links(json_links, page_subdomain, page_domain, page_suffix):
                     if link_domain not in excluded_domains:
                         if link_suffix not in excluded_suffixes:
                             if link_subdomain == "":
-                                formatted_link = ("",link_domain+"."+link_suffix)
+                                formatted_link = ("", link_domain+"."+link_suffix)
                             else:
-                                formatted_link = (link_subdomain,link_domain+"."+link_suffix)
+                                formatted_link = (link_subdomain, link_domain+"."+link_suffix)
                             filtered_links.add(formatted_link)#,link_url)
             except Exception as e:
                 #print("Error in filter_links: ", e)
                 pass
-        #print("DONE FIltering, results============:\n",filtered_links)
         return filtered_links
     except Exception as e:
         #print("error: ",e)
@@ -122,47 +140,43 @@ def filter_links(json_links, page_subdomain, page_domain, page_suffix):
 
 
 def main(sc):
+
+
     start_time = time.time()
 
     parser = argparse.ArgumentParser(description='LinkRun python module')
-
-    # Will likely remobe --wat_number since I get this info in other arguments
     parser.add_argument('--testing_wat',
-            default=0,
-            type=int,
-            help='Used for debugging. If set to 1, will use a testing wat file')
+                        default=0,
+                        type=int,
+                        help='Used for debugging. If set to 1, will use a testing wat file (default=0)')
     parser.add_argument('--write_to_db',
-            default=0,
-            type=int,
-            help='Should the job write output to database? (0/1)')
+                        default=0,
+                        type=int,
+                        help='Should the job write output to database? (0/1), (default=0)')
     parser.add_argument('--db_table',
-            default="temp",
-            type=str,
-            help='Specify name of database table to write to. (default=temp)')
+                        default="temp",
+                        type=str,
+                        help='Specify name of database table to write to. (default=temp)')
     parser.add_argument('--verbose_output_rows',
-            default=10,
-            type=int,
-            help='How many rows of RDD to print to screen for debugging? (default=10)')
-
+                        default=10,
+                        type=int,
+                        help='How many rows of RDD to print to screen for debugging? (default=10)')
     parser.add_argument('--wat_paths_file_s3bucket',
-            default='linkrun',
-            type=str,
-            help='Public S3 bucket with wat.paths file')
-
+                        default='linkrun',
+                        type=str,
+                        help='Public S3 bucket with wat.paths file')
     parser.add_argument('--wat_paths_file_s3key',
-            default='wat.paths',
-            type=str,
-            help='Public S3 key pointing to wat.paths file')
-
+                        default='wat.paths',
+                        type=str,
+                        help='Public S3 key pointing to wat.paths file')
     parser.add_argument('--first_wat_file_number',
-            default=1,
-            type=int,
-            help='First row in wat.paths to process (1 is first file)')
+                        default=1,
+                        type=int,
+                        help='First row in wat.paths to process (1 is first file)')
     parser.add_argument('--last_wat_file_number',
-            default=1,
-            type=int,
-            help='Last row in wat.paths to process (inclusive, will process this row)')
-
+                        default=1,
+                        type=int,
+                        help='Last row in wat.paths to process (inclusive, will process this row)')
 
     parsed_args = parser.parse_args()
     testing_wat = parsed_args.testing_wat
@@ -276,19 +290,7 @@ def main(sc):
     print("Total script run time: {}".format(run_time))
 
 
-
 if __name__ == "__main__":
-
     conf = SparkConf()
     sc = SparkContext(conf=conf, appName="LinkRun main module")
-
-    # Set the Credential Keys for AWS S3 Connection
-    # Only need if using a non-public s3
-    #awsAccessKeyId = "test" #os.environ.get('AWS_ACCESS_KEY_ID')
-    #awsSecretAccessKey = "test" #os.environ.get('AWS_SECRET_ACCESS_KEY')
-    #sc._jsc.hadoopConfiguration().set('fs.s3n.awsAccessKeyId',awsAccessKeyId)
-    #sc._jsc.hadoopConfiguration().set('fs.s3n.awsSecretAccessKey',awsSecretAccessKey)
-    #sc._jsc.hadoopConfiguration().set('fs.s3.endpoint','s3.us-east-1.amazonaws.com')
-    #sc._jsc.hadoopConfiguration().set('fs.s3.impl','org.apache.hadoop.fs.s3native.NativeS3FileSystem')
-
     main(sc)
