@@ -16,5 +16,5 @@ echo 'export PYSPARK_PYTHON=python3' >> .bashrc
 echo 'git clone https://github.com/trendsci/linkrun.git' > gitclone.sh
 chmod +x gitclone.sh
 
-echo "done bootstrap" > bootstrap.txt
+echo "done main bootstrap" > bootstrap.txt
 echo `date` >> bootstrap.txt
