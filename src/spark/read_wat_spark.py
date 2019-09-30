@@ -184,9 +184,6 @@ def main(spark_context):
     parser.add_argument('--jdbc_url',
                         type=str,
                         help='URL to Postgres DB where data will be stored, specifying database')
-    parser.add_argument('--jdbc_user',
-                        type=str,
-                        help='URL to Postgres DB where data will be stored, specifying database')
 
     parsed_args = parser.parse_args()
     testing_wat = parsed_args.testing_wat
@@ -198,10 +195,10 @@ def main(spark_context):
     first_wat_file_number = parsed_args.first_wat_file_number
     last_wat_file_number = parsed_args.last_wat_file_number
     jdbc_url = parsed_args.jdbc_url
-    jdbc_user = parsed_args.jdbc_user
 
     # Get passwords from environment variables
-    jdbc_password = os.environ.get('POSTGRES_PASSWORD')
+    jdbc_password = os.environ['POSTGRES_PASSWORD']
+    jdbc_user = os.environ['POSTGRES_USER']
 
     # Get a list of common crawl file locations to process.
     # This list can be found in common crawl S3 wat.paths file.
@@ -260,7 +257,8 @@ def main(spark_context):
 
             mode = "overwrite"
             url = jdbc_url
-            properties = {"user": jdbc_user,"password": "turtles21","driver": "org.postgresql.Driver"}
+            properties = {"user": jdbc_user, "password": jdbc_password,
+                        "driver": "org.postgresql.Driver"}
             rdd_df.write.jdbc(url=url, table=db_table, mode=mode, properties=properties)
     # remove comments, need this except.
     # except Exception as e:

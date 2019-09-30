@@ -10,4 +10,4 @@ jars/
 data/
 pegscripts/
 sql/
-logs/
+logs/*
