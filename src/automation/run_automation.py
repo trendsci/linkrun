@@ -55,6 +55,7 @@ def main():
         if job['linkrun_done'] == 0:
             spark_job_command = """{spark_submit_command} \
             {deploy_params} \
+            --conf "spark.decommissioning.timeout.threshold=1800" \
             --packages org.postgresql:postgresql:9.4.1207.jre7,org.apache.hadoop:hadoop-aws:2.7.0 \
             {spark_job_python_source} \
             --testing_wat {testing_wat} \
