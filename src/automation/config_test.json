@@ -19,7 +19,7 @@
     "action": "do_line",
     "first_wat_file_number": 1,
     "last_wat_file_number": 1,
-    "output_table": "auto"
+    "output_table": "temp2"
   },
   {
     "id": "CC-MAIN-2019-35",

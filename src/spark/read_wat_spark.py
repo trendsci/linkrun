@@ -260,7 +260,7 @@ def main(spark_context):
             url = jdbc_url
             properties = {"user": jdbc_user, "password": jdbc_password,
                         "driver": "org.postgresql.Driver"}
-            rdd_df.write.jdbc(url=url, table=db_table, mode=mode, properties=properties)
+            rdd_df.write.option("numPartitions", 100).jdbc(url=url, table=db_table, mode=mode, properties=properties)
     # remove comments, need this except.
     # except Exception as e:
     #     print("DB ERROR ==="*10,"\n>\n",e)

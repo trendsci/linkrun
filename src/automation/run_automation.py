@@ -51,6 +51,8 @@ def main():
             "_" + str(job_month) + "_" + str(job_year) + \
             "_first_last_" + str(first_wat_file_number) + \
             "_" + str(last_wat_file_number)
+        else:
+            database_table_name = "linkrunprod1." + database_table_name
 
         if job['linkrun_done'] == 0:
             spark_job_command = """{spark_submit_command} \
