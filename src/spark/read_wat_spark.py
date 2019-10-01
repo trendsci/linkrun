@@ -40,7 +40,8 @@ def get_json(line):
     """
     try:
         line = line.lower()
-        json_data = json.loads(line.replace(u'\0000', ''))
+        # sanitizing input, removing 0x00 character in different encodings (utf, html, etc)
+        json_data = json.loads(line.replace(u'\0000', '').replace("&#x0;", "").replace("\x00", "").replace(u'\u0000', ''))
         return json_data
     except Exception as e:
         pass
