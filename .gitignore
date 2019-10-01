@@ -1,3 +1,8 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+
+# ignore folders used in development
 commoncrawl/
 1/
 linkrun/
@@ -11,6 +16,6 @@ data/
 pegscripts/
 sql/
 
-
+# keep logs directory, but ignore all files inside
 logs/*
 !logs/.gitkeep
