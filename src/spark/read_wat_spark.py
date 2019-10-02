@@ -27,8 +27,9 @@ def get_json(line):
     Reads a string, converts it to lowercase,
     replaces UTF8 0x00 (null) characters with '' (empty string),
     and returns a JSON dictionay object.
-    Replacing 0x00 characters is required since they cannot be written
-    to postgres varchar field.
+    Some 0x00 characters are present in some links and replacing 0x00 characters
+    is required since they cannot be written to postgres varchar field.
+    These characters are filtered in a later function.
 
     If input string is not in JSON format, skipps line and returns None.
 
@@ -39,10 +40,11 @@ def get_json(line):
         Dictionary (containing JSON data).
     """
     try:
-        line = line.lower()
-        # sanitizing input, removing 0x00 character in different encodings (utf, html, etc)
-        json_data = json.loads(line)
-        return json_data
+        # Check if line likely has JSON by checking for: starts with '{'
+        if line[0] == '{':
+            line = line.lower()
+            json_data = json.loads(line)
+            return json_data
     except Exception as e:
         pass
 
@@ -122,12 +124,20 @@ def filter_links(json_links, page_subdomain, page_domain, page_suffix):
                 if link['path'] == r"a@/href":
                     link_url = link['url']
                     link_subdomain, link_domain, link_suffix = tldex.extract(link_url)
+
+                    # Sanitizing input, removing 0x00 character in different encodings (utf, html, etc)
+                    # Replacing 0x00 characters is required since they cannot
+                    # be written to postgres varchar field.
+                    link_subdomain = link_subdomain.replace(u'\0000', '').replace("&#x0;", "").replace("\x00", "").replace(u'\u0000', '').replace("\u0000","")
+                    link_domain = link_domain.replace(u'\0000', '').replace("&#x0;", "").replace("\x00", "").replace(u'\u0000', '').replace("\u0000","")
+                    link_suffix = link_suffix.replace(u'\0000', '').replace("&#x0;", "").replace("\x00", "").replace(u'\u0000', '').replace("\u0000","")
+
                     if link_domain not in excluded_domains:
                         if link_suffix not in excluded_suffixes:
                             if link_subdomain == "":
-                                formatted_link = ("", link_domain.replace(u'\0000', '').replace("&#x0;", "").replace("\x00", "").replace(u'\u0000', '').replace("\u0000","")+"."+link_suffix)
+                                formatted_link = ("", link_domain+"."+link_suffix)
                             else:
-                                formatted_link = (link_subdomain, link_domain.replace(u'\0000', '').replace("&#x0;", "").replace("\x00", "").replace(u'\u0000', '').replace("\u0000", "")+"."+link_suffix)
+                                formatted_link = (link_subdomain, link_domain+"."+link_suffix)
                             filtered_links.add(formatted_link)#,link_url)
             except Exception as e:
                 #print("Error in filter_links: ", e)

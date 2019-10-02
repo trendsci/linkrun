@@ -1,13 +1,13 @@
 [
   {
     "id": "CC-MAIN-2019-35",
-    "name": "August 2019 Index",
-    "month": 8,
+    "name": "July 2019 Index",
+    "month": 7,
     "year": 2019,
-    "linkrun_done": 1,
+    "linkrun_done": 0,
     "action": "do_line",
-    "first_wat_file_number": 1,
-    "last_wat_file_number": 1,
+    "first_wat_file_number": 4001,
+    "last_wat_file_number": 6000,
     "output_table": "auto"
   },
   {
@@ -15,10 +15,10 @@
     "name": "July 2019 Index",
     "month": 7,
     "year": 2019,
-    "linkrun_done": 0,
+    "linkrun_done": 1,
     "action": "do_line",
-    "first_wat_file_number": 2001,
-    "last_wat_file_number": 4000,
+    "first_wat_file_number": 6001,
+    "last_wat_file_number": 8000,
     "output_table": "auto"
   },
   {

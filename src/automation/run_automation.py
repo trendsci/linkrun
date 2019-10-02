@@ -30,7 +30,7 @@ def main():
     with open('./src/automation/config_test.json', 'r') as f:
         config_json = ujson.load(f)
 
-    spark_submit_command = "spark-submit"
+    spark_submit_command = "$SPARK_HOME/bin/spark-submit"
     spark_job_python_source = "./src/spark/read_wat_spark.py"
 
     for job in config_json:
