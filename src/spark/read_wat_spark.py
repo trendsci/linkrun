@@ -41,7 +41,7 @@ def get_json(line):
     try:
         line = line.lower()
         # sanitizing input, removing 0x00 character in different encodings (utf, html, etc)
-        json_data = json.loads(line.replace(u'\0000', '').replace("&#x0;", "").replace("\x00", "").replace(u'\u0000', ''))
+        json_data = json.loads(line)
         return json_data
     except Exception as e:
         pass
@@ -125,9 +125,9 @@ def filter_links(json_links, page_subdomain, page_domain, page_suffix):
                     if link_domain not in excluded_domains:
                         if link_suffix not in excluded_suffixes:
                             if link_subdomain == "":
-                                formatted_link = ("", link_domain+"."+link_suffix)
+                                formatted_link = ("", link_domain.replace(u'\0000', '').replace("&#x0;", "").replace("\x00", "").replace(u'\u0000', '').replace("\u0000","")+"."+link_suffix)
                             else:
-                                formatted_link = (link_subdomain, link_domain+"."+link_suffix)
+                                formatted_link = (link_subdomain, link_domain.replace(u'\0000', '').replace("&#x0;", "").replace("\x00", "").replace(u'\u0000', '').replace("\u0000", "")+"."+link_suffix)
                             filtered_links.add(formatted_link)#,link_url)
             except Exception as e:
                 #print("Error in filter_links: ", e)

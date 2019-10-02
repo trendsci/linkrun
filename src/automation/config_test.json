@@ -17,9 +17,9 @@
     "year": 2019,
     "linkrun_done": 0,
     "action": "do_line",
-    "first_wat_file_number": 1,
-    "last_wat_file_number": 1,
-    "output_table": "temp2"
+    "first_wat_file_number": 2001,
+    "last_wat_file_number": 4000,
+    "output_table": "auto"
   },
   {
     "id": "CC-MAIN-2019-35",
