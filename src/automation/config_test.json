@@ -1,6 +1,6 @@
 [
   {
-    "id": "CC-MAIN-2019-35",
+    "id": "CC-MAIN-2019-30",
     "name": "July 2019 Index",
     "month": 7,
     "year": 2019,
@@ -20,17 +20,6 @@
     "first_wat_file_number": 6001,
     "last_wat_file_number": 8000,
     "output_table": "auto"
-  },
-  {
-    "id": "CC-MAIN-2019-35",
-    "name": "August 2019 Index",
-    "month": 8,
-    "year": 2019,
-    "linkrun_done": 1,
-    "action": "do_line",
-    "first_wat_file_number": 2001,
-    "last_wat_file_number": 3000,
-    "output_table": "linkrundb_35_8_2019_first2001_last3000"
   }
 
 ]

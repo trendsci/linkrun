@@ -1,5 +1,7 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
+
+import os
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
@@ -8,82 +10,113 @@ from dash.dependencies import Input, Output, State
 
 import psycopg2 as pg
 
+# Get passwords from environment variables
+jdbc_password = os.environ['POSTGRES_PASSWORD']
+jdbc_user = os.environ['POSTGRES_USER']
+jdbc_host =  r"linkrundb.caf9edw1merh.us-west-2.rds.amazonaws.com"
+
+column_names = ['_1','_2','sum_3']
+col1, col2, col3 = column_names
+table_name = r"linkrunstatic.ccjuly2019"#'linkrunprod1.linkrundb_30_7_2019_first_last_16001_24000'#'linkrun.temp500copy'
+
 def printall(cur):
     for i in cur.fetchall():
         print(i)
 
-conn = pg.connect(host=r"linkrundb.caf9edw1merh.us-west-2.rds.amazonaws.com",
-                dbname="linkrundb", user="postgres", password="turtles21")
+conn = pg.connect(host= jdbc_host,
+                dbname="linkrundb", user=jdbc_user, password=jdbc_password)
 
 cur = conn.cursor()
+# Preload data on page with top domains
 cur.execute("""
-SELECT * FROM linkrun.temp500copy
-ORDER BY _3 DESC
-LIMIT 20;
-""")
+            SELECT * FROM {table_name}
+            ORDER BY {col3} DESC
+            LIMIT 20;
+            """.format(col3=col3,table_name=table_name) )
 top_links = cur.fetchall()
 
-#print([i for i in top100])
 
+external_stylesheets = ['https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css']
 
-#external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
-
-app = dash.Dash(__name__)#, external_stylesheets=external_stylesheets)
+app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 app.layout = \
     html.Div(id = "centering_div",
     style={'text-align':'center'},
     children=[
+
         html.Div(id = "maindiv",
-        style={'width': '70%','display': 'inline-block'},
-        children=[
-        html.H1(children='LinkRun'),
+            className="mt-2",
+            style={'width': '80%','max-width': '600px','display': 'inline-block'},
+            children=[
 
-        html.Div(children='''
-            Website link-back popularity ranking
-        ''',style={'font-size':'18px'}),
-        #html.Br(),
+            html.H1(children='LinkRun'),
 
-        html.Pre(children='''
-            Enter a number to view top sites, or a comma separated lists of sites.
-            E.g. "20", "facebook.com,google.com", "target.com,walmart.com"
-        '''),
-        dcc.Input(
-            id='user_link',
-            value='20',
-            type='text',
-            style={'width':'100%',
-                    'font-size':'18px'}
+            html.Div(children='''
+                Website popularity ranking
+                ''',
+                style={'font-size':'18px'}
+                ),
+
+            html.Br(),
+
+            html.Details([
+                html.Summary('Not sure what to do? Click here.'),
+            dcc.Markdown(children=[
+            '''
+            LinkRun ranks website popularity based on the number of pages linking to them.
+
+            To search the LinkRun database: enter a number to view top sites (e.g. 20),
+            a domain name (e.g. "facebook.com"), or a comma separated lists of domains (e.g. "facebook.com,google.com", "target.com,walmart.com")
+            '''],
+            style={'text-align':'left'})
+            ])
+
+            ,
+            dcc.Input(
+                id='user_link',
+                className="form-group form-control",
+                value='20',
+                type='text',
+                style={'width':'100%',
+                        'font-size':'18px'}
+                ),
+            html.Div(id='submit', children=[
+            html.Button("Submit (number or website)",
+                id="search",
+                className="btn btn-primary",
+                style={'font-size':'14px','display': 'inline-block'}
+                ),
+
+            dcc.Checklist(id="group_by_domain",
+                options=[
+                {'label': 'Group all subdomains', 'value': 'group'}
+                ],
+                value=[],
+                )],
             ),
 
-        html.Button("Submit (number or website)",
-            id="search",
-            style={'font-size':'14px'}
+            #html.Br(),
+
+            html.Div(
+            dash_table.DataTable(
+                id='link_pupolarity',
+                columns=[{"name":'Link subdomain',"id":"1"},
+                {"name":'Link domain.tld',"id":"2"},
+                {"name":'Number of linking pages',"id":"3"}],
+                data=[{"1":a,"2":b,"3":c} for a,b,c in top_links],
+                editable=False,
+                filter_action="native",
+                sort_action="native",
+                sort_mode="multi",
+                page_action='native',
+                page_current= 0,
+                page_size= 20
             ),
+            style={"max-width":"100%"}
+            )
 
-        html.Br(),html.Br(),
 
-        dash_table.DataTable(
-            id='link_pupolarity',
-            columns=[{"name":'Link subdomain',"id":"1"},
-            {"name":'Link domain.tld',"id":"2"},
-            {"name":'Number of linking pages',"id":"3"}],
-            data=[{"1":a,"2":b,"3":c} for a,b,c in top_links],
-            editable=True
-        )
-
-    # dcc.Graph(
-    #     id='example-graph',
-    #     figure={
-    #         'data': [
-    #             {'x': [1, 2, 3], 'y': [4, 1, 2], 'type': 'bar', 'name': 'SF'},
-    #             {'x': [1, 2, 3], 'y': [2, 4, 5], 'type': 'bar', 'name': u'Montréal'},
-    #         ],
-    #         'layout': {
-    #             'title': 'Dash Data Visualization'
-    #         }
-    #     }
-    # )
 ])
 ]
 )
@@ -92,52 +125,118 @@ app.layout = \
     [Output(component_id='link_pupolarity', component_property='data'),
     Output(component_id='link_pupolarity', component_property='columns')],
     [Input(component_id='search', component_property='n_clicks')],
-    [State('user_link','value')]
+    [State('user_link','value'),
+    State('group_by_domain','value')]
 )
-def update_table(clicks,input_value):
-    print("User input:\n",input_value,"\n")
+def update_table(clicks,input_value,group_by_domain):
+
+    columns_3 = [{"name":'Link subdomain',"id":"1"},
+    {"name":'Link domain.tld',"id":"2"},
+    {"name":'Number of linking pages',"id":"3"}]
+
+    columns_2 = [{"name":'Link domain.tld',"id":"2"},
+    {"name":'Number of linking pages',"id":"3"}]
+
+    print("\nUser clicked submit.")
+    print("Group by domain:",group_by_domain)
+    print("User input:",input_value)
+    print("==============\n")
+
     input_value_list = input_value.split(",")
     print("User input list:\n",input_value_list,"\n")
+
+    # Check if user entered a number
     try:
-        try:
-            number = int(input_value)
-            cur.execute("""SELECT * from linkrun.temp500copy
-            ORDER BY _3 DESC
-            LIMIT {};""".format(number))
-            top_links = cur.fetchall()
-            return [{"1":a,"2":b,"3":c} for a,b,c in top_links], [{"name":'Link subdomain',"id":"1"},{"name":'Link domain.tld',"id":"2"},{"name":'Number of linking pages',"id":"3"}]
-        except:
-            pass
+        limit_number = int(input_value)
 
-        #print(input_value, input_value[:4])
+        # if number > 10 million  or < 1, give user an error
+        if limit_number > 1000000:
+            return [{"1":"Error","2":"Try a smaller number","3":""}],columns_3
+        elif limit_number < 1:
+            return [{"1":"Error","2":"Try a bigger number","3":""}],columns_3
 
-        # generate SQL statment:
-        # WORKING ON THIS!
-        sql_where_clause = "WHERE "
-        for entry in input_value_list:
-            sql_where_clause += "_2 = '{}' OR ".format(str(entry))
-        else:
-            sql_where_clause = sql_where_clause[:-3]
-        # sql_command = """SELECT * from linkrun.temp500copy
-        # {}
-        # AND _3 > 1
-        # ORDER BY _3 DESC
-        # LIMIT 1000;""".format(sql_where_clause)
-        sql_command = """SELECT _2, sum(_3) as sum_3 from linkrun.temp500copy
-        {}
-        --AND _3 > 1
-        GROUP BY _2
-        ORDER BY sum_3 DESC
-        LIMIT 1000;""".format(sql_where_clause)
-        print(sql_command)
-        cur.execute(sql_command)
+        cur.execute("""SELECT * from {table_name}
+        ORDER BY {col3} DESC
+        LIMIT {limit_number};""".format(table_name=table_name,
+                                        limit_number=limit_number,
+                                        col3=col3)
+                    )
 
         top_links = cur.fetchall()
-        return [{"2":a,"3":b} for a,b in top_links], [{"name":'Link domain.tld',"id":"2"},
-        {"name":'Number of linking pages',"id":"3"}],
+
+        return [{"1":a,"2":b,"3":c} for a,b,c in top_links], columns_3
+
+    except:
+        # User input was not a number
+        pass
+
+    # If user input is not a number:
+    try:
+        # lowercase user input
+        input_value_list = [val.lower() for val in input_value_list]
+
+        # If user wants to group all entries by domain
+        if group_by_domain:
+            # generate sql GROUP BY statement
+            group_by = "GROUP BY {col2}".format(col2=col2)
+            # generate sql WHERE statement
+            sql_where_clause = "WHERE "
+            for entry in input_value_list:
+                sql_where_clause += "{col2} = $${entry}$$ OR ".format(
+                                col2=col2, entry=str(entry))
+            else:
+                sql_where_clause = sql_where_clause[:-3]
+
+            sql_command = """
+            SELECT {col2}, sum({col3}) as sum_3 from {table_name}
+            {sql_where_clause}
+            {group_by}
+            ORDER BY sum_3 DESC
+            LIMIT 10000;""".format(
+                                col2=col2,
+                                col3=col3,
+                                table_name=table_name,
+                                sql_where_clause=sql_where_clause,
+                                group_by=group_by
+                                )
+            print("SQL COMMAND:\n",sql_command)
+            cur.execute(sql_command)
+
+            top_links = cur.fetchall()
+            return [{"2":a,"3":b} for a,b in top_links], columns_2
+
+        # if user does not want to group by domain:
+        else:
+            sql_where_clause = "WHERE "
+            for entry in input_value_list:
+                sql_where_clause += "{col2} = $${entry}$$ OR ".format(
+                                col2=col2, entry=str(entry))
+            else:
+                sql_where_clause = sql_where_clause[:-3]
+            print(sql_where_clause)
+            sql_command = """
+            SELECT {col1}, {col2}, {col3} from {table_name}
+            {sql_where_clause}
+            ORDER BY {col3} DESC
+            LIMIT 10000;""".format(
+                                col1=col1,
+                                col2=col2,
+                                col3=col3,
+                                table_name=table_name,
+                                sql_where_clause=sql_where_clause,
+                                )
+            print("SQL COMMAND:\n",sql_command)
+            cur.execute(sql_command)
+
+            top_links = cur.fetchall()
+            return [{"1":a,"2":b,"3":c} for a,b,c in top_links], columns_3
+
     except Exception as e:
         pass
-        #print("exception: ",e)
+
+# from dash forum
+#app.css.append_css({"external_url": "https://codepen.io/chriddyp/pen/bWLwgP.css"})
+#app.css.append_css({"external_url": "https://codepen.io/chriddyp/pen/brPBPO.css"})
 
 
 if __name__ == '__main__':
