@@ -17,7 +17,7 @@ jdbc_host =  r"linkrundb.caf9edw1merh.us-west-2.rds.amazonaws.com"
 
 column_names = ['_1','_2','sum_3']
 col1, col2, col3 = column_names
-table_name = r"linkrunstatic.ccjuly2019"#'linkrunprod1.linkrundb_30_7_2019_first_last_16001_24000'#'linkrun.temp500copy'
+table_name = r"linkrunstatic.ccjuly2019_full"#'linkrunprod1.linkrundb_30_7_2019_first_last_16001_24000'#'linkrun.temp500copy'
 
 def printall(cur):
     for i in cur.fetchall():
@@ -39,6 +39,11 @@ top_links = cur.fetchall()
 external_stylesheets = ['https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+
+#test:
+top_links = [(r'<a href="www.google.com">Google Link','here',2)]
+print(len(top_links))
+
 
 app.layout = \
     html.Div(id = "centering_div",
@@ -145,12 +150,16 @@ def update_table(clicks,input_value,group_by_domain):
     input_value_list = input_value.split(",")
     print("User input list:\n",input_value_list,"\n")
 
+    
+    top_links = [(r'<a href="www.google.com">Google Link</a>','here',2)]
+    return [{"1":a,"2":b,"3":c} for a,b,c in top_links], columns_3
+
     # Check if user entered a number
     try:
         limit_number = int(input_value)
 
         # if number > 10 million  or < 1, give user an error
-        if limit_number > 1000000:
+        if limit_number > 1000:
             return [{"1":"Error","2":"Try a smaller number","3":""}],columns_3
         elif limit_number < 1:
             return [{"1":"Error","2":"Try a bigger number","3":""}],columns_3
@@ -240,4 +249,4 @@ def update_table(clicks,input_value,group_by_domain):
 
 
 if __name__ == '__main__':
-    app.run_server()#debug=True)
+    app.run_server(host='0.0.0.0',port="8050")#debug=True)
