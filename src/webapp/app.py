@@ -13,7 +13,7 @@ import psycopg2 as pg
 # Get passwords from environment variables
 jdbc_password = os.environ['POSTGRES_PASSWORD']
 jdbc_user = os.environ['POSTGRES_USER']
-jdbc_host =  r"linkrundb.caf9edw1merh.us-west-2.rds.amazonaws.com"
+jdbc_host = os.environ['POSTGRES_LOCATION']
 
 column_names = ['_1','_2','sum_3']
 col1, col2, col3 = column_names
@@ -38,11 +38,6 @@ top_links = cur.fetchall()
 external_stylesheets = ['https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-
-#test:
-top_links = [(r'<a href="www.google.com">Google Link','here',2)]
-print(len(top_links))
-
 
 app.layout = \
     html.Div(id = "centering_div",
@@ -114,8 +109,16 @@ app.layout = \
                 sort_action="native",
                 sort_mode="multi",
                 page_action='native',
+
                 page_current= 0,
-                page_size= 20
+                page_size= 200,
+                style_cell={'height': 'auto',
+                            'minWidth': '180px', 'width': '180px', 'maxWidth': '180px',
+                            'whiteSpace': 'normal'},
+                style_table={'max-height': '500px',
+                             'overflowY': 'auto'},
+                #fixed_rows={'headers': True, 'data':0},
+                #style_cell={'width': '150px'}
             ),
             style={"max-width":"100%"}
             )
@@ -127,7 +130,8 @@ app.layout = \
 
 @app.callback(
     [Output(component_id='link_pupolarity', component_property='data'),
-    Output(component_id='link_pupolarity', component_property='columns')],
+    Output(component_id='link_pupolarity', component_property='columns'),
+    Output(component_id='link_pupolarity', component_property='page_current')],
     [Input(component_id='search', component_property='n_clicks')],
     [State('user_link','value'),
     State('group_by_domain','value')]
@@ -159,9 +163,9 @@ def update_table(clicks,input_value,group_by_domain):
 
         # if number > 10 million  or < 1, give user an error
         if limit_number > 1000:
-            return [{"1":"Error","2":"Try a smaller number","3":""}],columns_3
+            return [{"1":"Error","2":"Try a smaller number","3":""}],columns_3,0
         elif limit_number < 1:
-            return [{"1":"Error","2":"Try a bigger number","3":""}],columns_3
+            return [{"1":"Error","2":"Try a bigger number","3":""}],columns_3,0
 
         cur.execute("""SELECT * from {table_name}
         ORDER BY {col3} DESC
@@ -172,7 +176,7 @@ def update_table(clicks,input_value,group_by_domain):
 
         top_links = cur.fetchall()
 
-        return [{"1":a,"2":b,"3":c} for a,b,c in top_links], columns_3
+        return [{"1":a,"2":b,"3":c} for a,b,c in top_links], columns_3,0
 
     except:
         # User input was not a number
@@ -211,7 +215,7 @@ def update_table(clicks,input_value,group_by_domain):
             cur.execute(sql_command)
 
             top_links = cur.fetchall()
-            return [{"2":a,"3":b} for a,b in top_links], columns_2
+            return [{"2":a,"3":b} for a,b in top_links], columns_2,0
 
         # if user does not want to group by domain:
         else:
@@ -237,7 +241,7 @@ def update_table(clicks,input_value,group_by_domain):
             cur.execute(sql_command)
 
             top_links = cur.fetchall()
-            return [{"1":a,"2":b,"3":c} for a,b,c in top_links], columns_3
+            return [{"1":a,"2":b,"3":c} for a,b,c in top_links], columns_3,0
 
     except Exception as e:
         pass
