@@ -2,20 +2,22 @@
 __pycache__/
 *.py[cod]
 
-# ignore folders used in development
+# Ignore folders used in development
 commoncrawl/
 1/
 linkrun/
 old_ignore/
 sampledata/
 personal_notes/
-secrets/
 tmp/
 jars/
 data/
 pegscripts/
 sql/
 
-# keep logs directory, but ignore all files inside
+# Ignore folder with secrets
+secrets/
+
+# Keep logs directory, but ignore all files inside
 logs/*
 !logs/.gitkeep
