@@ -35,7 +35,6 @@ cur.execute("""
             """.format(col3=col3,table_name=table_name) )
 top_links = cur.fetchall()
 
-
 external_stylesheets = ['https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -150,7 +149,7 @@ def update_table(clicks,input_value,group_by_domain):
         limit_number = int(input_value)
 
         # if number > 10 million  or < 1, give user an error
-        if limit_number > 1000000:
+        if limit_number > 1000:
             return [{"1":"Error","2":"Try a smaller number","3":""}],columns_3
         elif limit_number < 1:
             return [{"1":"Error","2":"Try a bigger number","3":""}],columns_3
@@ -192,7 +191,7 @@ def update_table(clicks,input_value,group_by_domain):
             {sql_where_clause}
             {group_by}
             ORDER BY sum_3 DESC
-            LIMIT 10000;""".format(
+            LIMIT 1000;""".format(
                                 col2=col2,
                                 col3=col3,
                                 table_name=table_name,
@@ -218,7 +217,7 @@ def update_table(clicks,input_value,group_by_domain):
             SELECT {col1}, {col2}, {col3} from {table_name}
             {sql_where_clause}
             ORDER BY {col3} DESC
-            LIMIT 10000;""".format(
+            LIMIT 1000;""".format(
                                 col1=col1,
                                 col2=col2,
                                 col3=col3,
@@ -240,4 +239,4 @@ def update_table(clicks,input_value,group_by_domain):
 
 
 if __name__ == '__main__':
-    app.run_server()#debug=True)
+    app.run_server(debug=True)
