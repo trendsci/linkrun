@@ -150,8 +150,8 @@ def update_table(clicks,input_value,group_by_domain):
     print("User input list:\n",input_value_list,"\n")
 
     
-    top_links = [(r'<a href="www.google.com">Google Link</a>','here',2)]
-    return [{"1":a,"2":b,"3":c} for a,b,c in top_links], columns_3
+    #top_links = [(r'<a href="www.google.com">Google Link</a>','here',2)]
+    #return [{"1":a,"2":b,"3":c} for a,b,c in top_links], columns_3
 
     # Check if user entered a number
     try:
@@ -248,8 +248,5 @@ def update_table(clicks,input_value,group_by_domain):
 
 
 if __name__ == '__main__':
-<<<<<<< HEAD
     app.run_server(host='0.0.0.0',port="8050")#debug=True)
-=======
-    app.run_server(debug=True)
->>>>>>> 0685021405aed35192f51188075dbc0c9baf8a98
+    #app.run_server(debug=True)
