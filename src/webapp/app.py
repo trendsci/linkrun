@@ -104,21 +104,25 @@ app.layout = \
                 {"name":'Link domain.tld',"id":"2"},
                 {"name":'Number of linking pages',"id":"3"}],
                 data=[{"1":a,"2":b,"3":c} for a,b,c in top_links],
+
+                style_header={'fontWeight': 'normal', 'textAlign': 'center'},
+
+                style_table={'max-height': '500px',
+                             'overflowY': 'auto'},
+                
+                style_cell={'height': 'auto',
+                            'minWidth': '180px', 'width': '180px', 'maxWidth': '180px',
+                            'whiteSpace': 'normal',
+                            'textAlign': 'center'},
+                
                 editable=False,
-                filter_action="native",
+                #filter_action="native",
                 sort_action="native",
                 sort_mode="multi",
                 page_action='native',
-
                 page_current= 0,
                 page_size= 200,
-                style_cell={'height': 'auto',
-                            'minWidth': '180px', 'width': '180px', 'maxWidth': '180px',
-                            'whiteSpace': 'normal'},
-                style_table={'max-height': '500px',
-                             'overflowY': 'auto'},
-                #fixed_rows={'headers': True, 'data':0},
-                #style_cell={'width': '150px'}
+                fixed_rows={'headers': True, 'data':0},
             ),
             style={"max-width":"100%"}
             )
