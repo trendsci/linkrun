@@ -73,10 +73,12 @@ app.layout = \
                 html.Summary('Not sure what to do? Click here.'),
             dcc.Markdown(children=[
             '''
-            LinkRun ranks website popularity based on the number of pages linking to them.
+            **LinkRun ranks website popularity based on the number of pages linking to them.**
+
+            **To see LinkRun Ratings, click "Group all subdomains & display ratings".**
 
             To search the LinkRun database: enter a number to view top sites (e.g. 20),
-            a domain name (e.g. "facebook.com"), or a comma separated lists of domains (e.g. "facebook.com,google.com", "target.com,walmart.com")
+            a domain name (e.g. "facebook.com"), or a comma separated lists of domains (e.g. "facebook.com,google.com", "target.com,walmart.com").
             '''],
             style={'text-align':'left'})
             ])
