@@ -29,8 +29,10 @@ def pretty_rank(rank_value):
     rank_1_to_10 = round(rank_value*10)
     pretty_rank_text = u'\u25FC'*rank_1_to_10 + u'\u25FB'*(10-rank_1_to_10)
     pretty_rank_number = "("+str(rank_1_to_10*10)+"%)"
-    pretty_rank_text += " {:>6}".format(pretty_rank_number)
-    return pretty_rank_text
+
+    pretty_rank_output = "{text:{nbsp}<17}".format(text=pretty_rank_text+" "+pretty_rank_number,nbsp=u'\u00A0')
+    #pretty_rank_text += " {: >6}".format(pretty_rank_number)
+    return pretty_rank_output
     #return "hello {:.2f}".format(rank_value)
 
 conn = pg.connect(host= jdbc_host,
@@ -125,7 +127,7 @@ app.layout = \
                 style_cell={'height': 'auto',
                             'minWidth': '180px', 'width': '180px', 'maxWidth': '180px',
                             'whiteSpace': 'normal',
-                            'textAlign': 'left'},
+                            'textAlign': 'center'},
 
                 editable=False,
                 #filter_action="native",
