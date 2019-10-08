@@ -18,10 +18,20 @@ jdbc_host = os.environ['POSTGRES_LOCATION']
 column_names = ['_1','_2','sum_3']
 col1, col2, col3 = column_names
 table_name = r"linkrunstatic.ccjuly2019_full"#'linkrunprod1.linkrundb_30_7_2019_first_last_16001_24000'#'linkrun.temp500copy'
+table_name_grouped = r"linkrunstatic.ccjuly2019_full_grouped_ranked"
 
 def printall(cur):
     for i in cur.fetchall():
         print(i)
+
+def pretty_rank(rank_value):
+    #pretty_rank_text = r"▮▮▮▯▯▯▯▯▯▯ 30%"
+    rank_1_to_10 = round(rank_value*10)
+    pretty_rank_text = u'\u25FC'*rank_1_to_10 + u'\u25FB'*(10-rank_1_to_10)
+    pretty_rank_number = "("+str(rank_1_to_10*10)+"%)"
+    pretty_rank_text += " {:>6}".format(pretty_rank_number)
+    return pretty_rank_text
+    #return "hello {:.2f}".format(rank_value)
 
 conn = pg.connect(host= jdbc_host,
                 dbname="linkrundb", user=jdbc_user, password=jdbc_password)
@@ -89,7 +99,7 @@ app.layout = \
 
             dcc.Checklist(id="group_by_domain",
                 options=[
-                {'label': 'Group all subdomains', 'value': 'group'}
+                {'label': 'Group all subdomains & display ratings', 'value': 'group'}
                 ],
                 value=[],
                 )],
@@ -109,12 +119,12 @@ app.layout = \
 
                 style_table={'max-height': '500px',
                              'overflowY': 'auto'},
-                
+
                 style_cell={'height': 'auto',
                             'minWidth': '180px', 'width': '180px', 'maxWidth': '180px',
                             'whiteSpace': 'normal',
-                            'textAlign': 'center'},
-                
+                            'textAlign': 'left'},
+
                 editable=False,
                 #filter_action="native",
                 sort_action="native",
@@ -146,6 +156,10 @@ def update_table(clicks,input_value,group_by_domain):
     {"name":'Link domain.tld',"id":"2"},
     {"name":'Number of linking pages',"id":"3"}]
 
+    columns_3_rank = [{"name":'Link domain.tld',"id":"2"},
+    {"name":'Number of linking pages',"id":"3"},
+    {"name":'LinkRun Rank',"id":"4"}]
+
     columns_2 = [{"name":'Link domain.tld',"id":"2"},
     {"name":'Number of linking pages',"id":"3"}]
 
@@ -157,7 +171,7 @@ def update_table(clicks,input_value,group_by_domain):
     input_value_list = input_value.split(",")
     print("User input list:\n",input_value_list,"\n")
 
-    
+
     #top_links = [(r'<a href="www.google.com">Google Link</a>','here',2)]
     #return [{"1":a,"2":b,"3":c} for a,b,c in top_links], columns_3
 
@@ -189,7 +203,7 @@ def update_table(clicks,input_value,group_by_domain):
     # If user input is not a number:
     try:
         # lowercase user input
-        input_value_list = [val.lower() for val in input_value_list]
+        input_value_list = [val.lower().strip() for val in input_value_list]
 
         # If user wants to group all entries by domain
         if group_by_domain:
@@ -203,15 +217,28 @@ def update_table(clicks,input_value,group_by_domain):
             else:
                 sql_where_clause = sql_where_clause[:-3]
 
+            # sql_command = """
+            # SELECT {col2}, sum({col3}) as sum_3 from {table_name}
+            # {sql_where_clause}
+            # {group_by}
+            # ORDER BY sum_3 DESC
+            # LIMIT 1000;""".format(
+            #                     col2=col2,
+            #                     col3=col3,
+            #                     table_name=table_name_group,
+            #                     sql_where_clause=sql_where_clause,
+            #                     group_by=group_by
+            #                     )
+
+            #testing with ranking using grouped table
             sql_command = """
-            SELECT {col2}, sum({col3}) as sum_3 from {table_name}
+            SELECT {col2}, {col3}, linkrunrank from {table_name}
             {sql_where_clause}
-            {group_by}
             ORDER BY sum_3 DESC
             LIMIT 1000;""".format(
                                 col2=col2,
                                 col3=col3,
-                                table_name=table_name,
+                                table_name=table_name_grouped,
                                 sql_where_clause=sql_where_clause,
                                 group_by=group_by
                                 )
@@ -219,7 +246,10 @@ def update_table(clicks,input_value,group_by_domain):
             cur.execute(sql_command)
 
             top_links = cur.fetchall()
-            return [{"2":a,"3":b} for a,b in top_links], columns_2,0
+            print(top_links)
+            #returning 3 columns
+            return [{"2":a,"3":b,"4":pretty_rank(c)} for a,b,c in top_links], columns_3_rank, 0
+            #return [{"2":a,"3":b} for a,b in top_links], columns_2, 0
 
         # if user does not want to group by domain:
         else:
@@ -256,5 +286,5 @@ def update_table(clicks,input_value,group_by_domain):
 
 
 if __name__ == '__main__':
-    app.run_server(host='0.0.0.0',port="8050")#debug=True)
+    app.run_server(host='0.0.0.0',port="8050",debug=True)
     #app.run_server(debug=True)
