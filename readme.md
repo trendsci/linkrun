@@ -1,19 +1,25 @@
 # LinkRun
-A pipeline to analyze popularity of links across the web.
+**A pipeline to analyze popularity of domains across the web.**
+
+[LinkRun web application](www.LunkRun.com)<br><br>
+[Project slides](http://bit.ly/linkrunslides)
 
 ## Idea
 
-LinkRun is a data engineering project created by me during the Insight Data Engineering fellowship.<br>
-LinkRun scans data from millions of web pages across the web and collects all the links present on those pages. LinkRun then counts how many times each web domain was linked to and presents this score per domain name.<br>
+LinkRun is a data engineering project that ranks the popularity of millions of websites. LinkRun was created within 3 weeks by me during the Insight Data Engineering fellowship.
+
+LinkRun processes data from over 2.6 billion web pages (>17 terabytes compressed data) and analyzes all the links present on those pages. LinkRun then counts how many times each domain was linked, filters out links based on specific criteria, and stores these results to a database (>47 million rows). The resulting database can be queried to obtain insight about the populatiry of millions of website across the internet. A custom web application allows users to view and query the data by entering their favorite websites into a search box.
+
+**The LinkRun database contains data for over 47 million unique subomain.domain entries from over 25 million unique websites**.
 
 Example output:
 
-| LINK  | COUNT |
-|-------|-------|
-| www.google.com  | 4,321,555     |
-| www.youtube.com | 3,125,484     |
+| Domain | Number of linking pages |
+|:-------:|:-------:|
+| facebook.com  | 1,123,535,234     |
+| youtube.com | 478,735,963     |
 | ... | ...     |
-| www.YourSite.com| 20,915        |
+| yoursite.com| 208,666      |
 
 
 ## The Pipeline
@@ -22,14 +28,17 @@ Example output:
 
 ## The Data
 
-LinkRun uses publically available website crawl data from [Common Crawl database](https://commoncrawl.org/). Common Crawl data is updated once a month with new web crawl data. LinkRun uses a scheduler that automatically reads and processes new data as it is made available.<br>
+LinkRun uses data from the [Common Crawl database](https://commoncrawl.org/). Common Crawl data is updated each month with new web crawl data. **LinkRun has analyzed the July 2019 Common Crawl data set which contains >2.5 billion web pages and >17 terabytes of compressed data.** LinkRun uses a scheduler that automatically reads and processes new data as it is made available.<br>
 
 ## How to run LinkRun on your own
 
-LinkRun can run on any resource that supports the applications used in the pipline. For best results, LinkRun should be run on AWS provisioned resources.<br>
-To automate AWS resource provisioning and setup the [Pegasus automatic deployment platform](https://github.com/InsightDataScience/pegasus) is used.<br>
-The following modifications are introduced to the Pegasus scripts to add required dependencies for LinkRun:
-* Replace /install/exvironment/install_env.sh with the file provided in this repo.
+LinkRun can run on any resource that supports the applications used in the pipline. For best results, LinkRun can be run on the following AWS provisioned resources:<br>
+* AWS Elastic MapReduce (EMR) release 5.26.0, running Spark 2.4.3
+  * Bootstrap the cluster using the files `linkrun_emr_bootstrap.sh` and `sample_secrets/sample_secret_bootstrap.sh` (update this file with your configurations).
+* AWS RDS running Postgres 10.6
+* (Optional) EC2 instance with the Dash web UI
+  * To configure the connection between the web UI and the database run `sample_secrets/sample_webapp_secrets.sh` then `source ~/.bashrc`
 
+To run the LinkRun pipeline use `run_automation.sh`. To modify which data is processed by LinkRun modify the `src/automation/config.json` file.
 
-Instructions to go here...
+## Thank you for visiting LinkRun!
