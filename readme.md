@@ -1,7 +1,7 @@
 # LinkRun
 **A pipeline to analyze popularity of domains across the web.**
 
-[LinkRun web application](www.LunkRun.com)<br><br>
+[LinkRun web application](http://www.LunkRun.com)<br><br>
 [Project slides](http://bit.ly/linkrunslides)
 
 ## Idea
