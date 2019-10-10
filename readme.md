@@ -39,6 +39,6 @@ LinkRun can run on any resource that supports the applications used in the pipli
 * (Optional) EC2 instance with the Dash web UI
   * To configure the connection between the web UI and the database run `sample_secrets/sample_webapp_secrets.sh` then `source ~/.bashrc`
 
-To run the LinkRun pipeline use `run_automation.sh`. To modify which data is processed by LinkRun modify the `src/automation/config.json` file.
+To run the LinkRun pipeline use `run.sh`. To modify which data is processed by LinkRun modify the `src/automation/config.json` file.
 
 ## Thank you for visiting LinkRun!

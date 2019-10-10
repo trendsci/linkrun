@@ -1,14 +1,14 @@
 [
   {
-    "id": "CC-MAIN-2019-35",
-    "name": "August 2019 Index",
-    "month": 8,
+    "id": "CC-MAIN-2019-30",
+    "name": "July 2019 Index",
+    "month": 7,
     "year": 2019,
     "linkrun_done": 0,
     "action": "do_line",
     "first_wat_file_number": 1,
-    "last_wat_file_number": 1,
-    "output_table": "linkrundb_35_8_2019_first1_last1"
+    "last_wat_file_number": 8000,
+    "output_table": "auto"
   },
   {
     "id": "CC-MAIN-2019-30",
@@ -17,20 +17,53 @@
     "year": 2019,
     "linkrun_done": 0,
     "action": "do_line",
-    "first_wat_file_number": 1,
-    "last_wat_file_number": 1,
-    "output_table": "linkrundb_30_7_2019_first1_last1"
+    "first_wat_file_number": 8001,
+    "last_wat_file_number": 16000,
+    "output_table": "auto"
   },
   {
-    "id": "CC-MAIN-2018-30",
-    "name": "July 2018 Index",
+    "id": "CC-MAIN-2019-30",
+    "name": "July 2019 Index",
     "month": 7,
-    "year": 2018,
+    "year": 2019,
     "linkrun_done": 0,
     "action": "do_line",
-    "first_wat_file_number": 1,
-    "last_wat_file_number": 1,
-    "output_table": "linkrundb_30_7_2018_first1_last1"
+    "first_wat_file_number": 16001,
+    "last_wat_file_number": 24000,
+    "output_table": "auto"
+  },
+  {
+    "id": "CC-MAIN-2019-30",
+    "name": "July 2019 Index",
+    "month": 7,
+    "year": 2019,
+    "linkrun_done": 0,
+    "action": "do_line",
+    "first_wat_file_number": 24001,
+    "last_wat_file_number": 32000,
+    "output_table": "auto"
+  },
+  {
+    "id": "CC-MAIN-2019-30",
+    "name": "July 2019 Index",
+    "month": 7,
+    "year": 2019,
+    "linkrun_done": 0,
+    "action": "do_line",
+    "first_wat_file_number": 32001,
+    "last_wat_file_number": 40000,
+    "output_table": "auto"
+  },
+  {
+    "id": "CC-MAIN-2019-30",
+    "name": "July 2019 Index",
+    "month": 7,
+    "year": 2019,
+    "linkrun_done": 0,
+    "action": "do_line",
+    "first_wat_file_number": 48001,
+    "last_wat_file_number": 56000,
+    "output_table": "auto"
   }
 
 ]
