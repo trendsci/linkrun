@@ -28,7 +28,7 @@ Example output:
 
 ## The Data
 
-LinkRun uses data from the [Common Crawl database](https://commoncrawl.org/). Common Crawl data is updated each month with new web crawl data. **LinkRun has analyzed the July 2019 Common Crawl data set which contains >2.5 billion web pages and >17 terabytes of compressed data.** LinkRun uses a scheduler that automatically reads and processes new data as it is made available.<br>
+LinkRun uses data from the [Common Crawl database](https://commoncrawl.org/). Common Crawl data is updated each month with new web crawl data. **LinkRun has analyzed the July 2019 Common Crawl data set which contains >2.5 billion web pages and >17 terabytes of compressed data.**
 
 ## How to run LinkRun on your own
 
