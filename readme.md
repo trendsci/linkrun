@@ -13,7 +13,7 @@ LinkRun processes data from over 2.6 billion web pages (>17 terabytes compressed
 
 **The LinkRun database contains data for over 47 million unique subomain.domain entries from over 25 million unique websites**.
 
-Example output:
+Example output ([click to see a video demo](http://bit.ly/linkrunvideo)):
 
 | Domain | Number of linking pages |
 |:-------:|:-------:|
